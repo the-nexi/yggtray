@@ -10,16 +10,23 @@
 #include <QClipboard>
 #include <QIcon>
 #include "ServiceManager.h"
+#include "SocketManager.h"
+
 
 const QString YGG_SOCKET_PATH = "/var/run/yggdrasil.sock";
+
+#define YGG_SOCKET_PATH "/var/run/yggdrasil.sock"
 
 class YggdrasilTray : public QObject {
     Q_OBJECT
 
 public:
-    explicit YggdrasilTray(QObject *parent = nullptr) : QObject(parent), serviceManager("yggdrasil") {
+    explicit YggdrasilTray(QObject *parent = nullptr)
+        : QObject(parent),
+          serviceManager("yggdrasil"),
+          socketManager(YGG_SOCKET_PATH) {
         trayIcon = new QSystemTrayIcon(this);
-        trayIcon->setIcon(QIcon::fromTheme("network-transmit-receive"));
+        trayIcon->setIcon(QIcon::fromTheme("network-vpn"));
         trayIcon->setToolTip("Yggdrasil Tray");
 
         trayMenu = new QMenu();
@@ -90,7 +97,7 @@ private slots:
     }
 
     void copyIP() {
-        QString ip = getYggdrasilIP();
+        QString ip = socketManager.getYggdrasilIP();
         if (!ip.isEmpty()) {
             QApplication::clipboard()->setText(ip);
             QMessageBox::information(nullptr, "Copy IP", "IP copied to clipboard: " + ip);
@@ -101,13 +108,13 @@ private slots:
 
     void updateTrayIcon() {
         QString status = serviceManager.isServiceRunning() ? "Running" : "Not Running";
-        QString ip = getYggdrasilIP();
+        QString ip = socketManager.getYggdrasilIP();
 
         statusAction->setText("Status: " + status);
         ipAction->setText("IP: " + ip);
 
         if (status == "Running") {
-            trayIcon->setIcon(QIcon::fromTheme("network-transmit-receive"));
+            trayIcon->setIcon(QIcon::fromTheme("network-vpn"));
         } else {
             trayIcon->setIcon(QIcon::fromTheme("network-offline"));
         }
@@ -126,36 +133,8 @@ private:
     QAction *ipAction;  // Action to display IP address
     QAction *toggleAction;
     QAction *copyIPAction;
-    ServiceManager serviceManager;  // Manager for service-related tasks
-
-    QString getYggdrasilIP() {
-        QJsonObject response = sendRequest({{"request", "getself"}});
-        if (response.contains("response")) {
-            return response["response"].toObject()["address"].toString();
-        }
-        return "Unknown";
-    }
-
-    QJsonObject sendRequest(const QJsonObject &request) {
-        QLocalSocket socket;
-        socket.connectToServer(YGG_SOCKET_PATH);
-
-        if (!socket.waitForConnected(3000)) {
-            return {};
-        }
-
-        socket.write(QJsonDocument(request).toJson(QJsonDocument::Compact) + "\n");
-        if (!socket.waitForBytesWritten(3000)) {
-            return {};
-        }
-
-        if (!socket.waitForReadyRead(3000)) {
-            return {};
-        }
-
-        QByteArray responseData = socket.readAll();
-        return QJsonDocument::fromJson(responseData).object();
-    }
+    ServiceManager serviceManager; // Manager for service-related tasks
+    SocketManager socketManager;   // Manager for socket-related tasks
 };
 
 int main(int argc, char *argv[]) {
@@ -173,4 +152,3 @@ int main(int argc, char *argv[]) {
 }
 
 #include "tray.moc"
-
