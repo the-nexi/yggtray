@@ -9,8 +9,7 @@
 #include <QTimer>
 #include <QClipboard>
 #include <QIcon>
-#include <QProcess>
-#include <QHostAddress>
+#include "ServiceManager.h"
 
 const QString YGG_SOCKET_PATH = "/var/run/yggdrasil.sock";
 
@@ -18,7 +17,7 @@ class YggdrasilTray : public QObject {
     Q_OBJECT
 
 public:
-    explicit YggdrasilTray(QObject *parent = nullptr) : QObject(parent) {
+    explicit YggdrasilTray(QObject *parent = nullptr) : QObject(parent), serviceManager("yggdrasil") {
         trayIcon = new QSystemTrayIcon(this);
         trayIcon->setIcon(QIcon::fromTheme("network-transmit-receive"));
         trayIcon->setToolTip("Yggdrasil Tray");
@@ -39,8 +38,7 @@ public:
 
         // Toggle Yggdrasil service action
         toggleAction = new QAction("Start/Stop Yggdrasil", trayMenu);
-        connect(toggleAction, &QAction::triggered, this, 
-				&YggdrasilTray::toggleYggdrasilService);
+        connect(toggleAction, &QAction::triggered, this, &YggdrasilTray::toggleYggdrasilService);
         trayMenu->addAction(toggleAction);
 
         // Copy IP action
@@ -71,32 +69,21 @@ public:
 
 private slots:
     void toggleYggdrasilService() {
-        // Check the actual status of the Yggdrasil service using systemctl
-        QProcess statusProcess;
-        QStringList statusArguments = {"is-active", "yggdrasil"};
-        statusProcess.start("systemctl", statusArguments);
-        statusProcess.waitForFinished();
-
-        QString serviceStatus = statusProcess.readAllStandardOutput().trimmed();
-
+        bool success;
         QString action;
-        QStringList arguments;
-        if (serviceStatus == "active") {
-            action = "stop";
-            arguments = QStringList() << "systemctl" << "stop" << "yggdrasil";
+
+        if (serviceManager.isServiceRunning()) {
+            success = serviceManager.stopService();
+            action = "stopped";
         } else {
-            action = "start";
-            arguments = QStringList() << "systemctl" << "start" << "yggdrasil";
+            success = serviceManager.startService();
+            action = "started";
         }
 
-        QProcess process;
-        process.start("pkexec", arguments);
-        process.waitForFinished();
-
-        if (process.exitCode() == 0) {
-            QMessageBox::information(nullptr, "Service Toggle", "Successfully " + action + "ed Yggdrasil service.");
+        if (success) {
+            QMessageBox::information(nullptr, "Service Toggle", "Yggdrasil service successfully " + action + ".");
         } else {
-            QMessageBox::critical(nullptr, "Service Toggle", "Failed to " + action + " Yggdrasil service.");
+            QMessageBox::critical(nullptr, "Service Toggle", "Failed to toggle Yggdrasil service.");
         }
 
         updateTrayIcon();
@@ -113,13 +100,13 @@ private slots:
     }
 
     void updateTrayIcon() {
-        QString status = getYggdrasilStatus();
+        QString status = serviceManager.isServiceRunning() ? "Running" : "Not Running";
         QString ip = getYggdrasilIP();
 
         statusAction->setText("Status: " + status);
         ipAction->setText("IP: " + ip);
 
-        if (status.contains("Running")) {
+        if (status == "Running") {
             trayIcon->setIcon(QIcon::fromTheme("network-transmit-receive"));
         } else {
             trayIcon->setIcon(QIcon::fromTheme("network-offline"));
@@ -139,11 +126,7 @@ private:
     QAction *ipAction;  // Action to display IP address
     QAction *toggleAction;
     QAction *copyIPAction;
-
-    QString getYggdrasilStatus() {
-        QJsonObject response = sendRequest({{"request", "getself"}});
-        return response.contains("response") ? "Running" : "Not Running";
-    }
+    ServiceManager serviceManager;  // Manager for service-related tasks
 
     QString getYggdrasilIP() {
         QJsonObject response = sendRequest({{"request", "getself"}});
