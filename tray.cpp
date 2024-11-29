@@ -3,19 +3,17 @@
 #include <QMenu>
 #include <QAction>
 #include <QMessageBox>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QLocalSocket>
 #include <QTimer>
 #include <QClipboard>
 #include <QIcon>
 #include "ServiceManager.h"
 #include "SocketManager.h"
 
-
+// Constants for Yggdrasil details
 const QString YGG_SOCKET_PATH = "/var/run/yggdrasil.sock";
-
-#define YGG_SOCKET_PATH "/var/run/yggdrasil.sock"
+const QString ICON_RUNNING = "network-vpn";
+const QString ICON_NOT_RUNNING = "network-offline";
+const QString TOOLTIP = "Yggdrasil Tray";
 
 class YggdrasilTray : public QObject {
     Q_OBJECT
@@ -26,8 +24,8 @@ public:
           serviceManager("yggdrasil"),
           socketManager(YGG_SOCKET_PATH) {
         trayIcon = new QSystemTrayIcon(this);
-        trayIcon->setIcon(QIcon::fromTheme("network-vpn"));
-        trayIcon->setToolTip("Yggdrasil Tray");
+        trayIcon->setIcon(QIcon::fromTheme(ICON_NOT_RUNNING));
+        trayIcon->setToolTip(TOOLTIP);
 
         trayMenu = new QMenu();
 
@@ -113,11 +111,7 @@ private slots:
         statusAction->setText("Status: " + status);
         ipAction->setText("IP: " + ip);
 
-        if (status == "Running") {
-            trayIcon->setIcon(QIcon::fromTheme("network-vpn"));
-        } else {
-            trayIcon->setIcon(QIcon::fromTheme("network-offline"));
-        }
+        trayIcon->setIcon(QIcon::fromTheme(status == "Running" ? ICON_RUNNING : ICON_NOT_RUNNING));
     }
 
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason) {
@@ -130,11 +124,11 @@ private:
     QSystemTrayIcon *trayIcon;
     QMenu *trayMenu;
     QAction *statusAction;
-    QAction *ipAction;  // Action to display IP address
+    QAction *ipAction;
     QAction *toggleAction;
     QAction *copyIPAction;
-    ServiceManager serviceManager; // Manager for service-related tasks
-    SocketManager socketManager;   // Manager for socket-related tasks
+    ServiceManager serviceManager;  // Manager for service-related tasks
+    SocketManager socketManager;    // Manager for socket-related tasks
 };
 
 int main(int argc, char *argv[]) {
@@ -152,3 +146,4 @@ int main(int argc, char *argv[]) {
 }
 
 #include "tray.moc"
+
