@@ -15,3 +15,21 @@ add_executable(tray tray.cpp)
 
 target_link_libraries(tray Qt5::Widgets Qt5::Network)
 
+# Add Doxygen support
+find_package(Doxygen)
+
+if (DOXYGEN_FOUND)
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
+    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/DoxygenDocs)
+
+    add_custom_target(
+        doc ALL
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_IN}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating Doxygen documentation"
+        VERBATIM
+    )
+else ()
+    message(WARNING "Doxygen not found. Documentation won't be generated.")
+endif ()
+

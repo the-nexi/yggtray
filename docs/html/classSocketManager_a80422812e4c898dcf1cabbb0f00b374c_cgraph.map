@@ -1,0 +1,5 @@
+<map id="SocketManager::getYggdrasilIP" name="SocketManager::getYggdrasilIP">
+<area shape="rect" id="Node000001" title="Retrieves the Yggdrasil IP address from the socket." alt="" coords="5,5,228,33"/>
+<area shape="rect" id="Node000002" href="$classSocketManager.html#a5c1ad70f71dad6f3e7721786b60b6cf4" title="Sends a request to the socket and receives the response." alt="" coords="276,5,489,33"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,16,260,16,260,22,228,22"/>
+</map>

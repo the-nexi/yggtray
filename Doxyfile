@@ -1,0 +1,90 @@
+# Doxyfile 1.9.7
+
+# Project settings
+PROJECT_NAME           = "Yggdrasil Tray"
+PROJECT_NUMBER         = "1.0"
+PROJECT_BRIEF          = "A tray-based interface for managing the Yggdrasil service"
+OUTPUT_DIRECTORY       = ./docs
+CREATE_SUBDIRS         = NO
+ALLOW_UNICODE_NAMES    = YES
+USE_MDFILE_AS_MAINPAGE = README.md
+
+
+# Input settings
+INPUT                  = ./tray.cpp ./ServiceManager.h ./SocketManager.h
+FILE_PATTERNS          = *.cpp *.h
+RECURSIVE              = YES
+EXCLUDE                = 
+EXCLUDE_PATTERNS       = 
+EXCLUDE_SYMLINKS       = NO
+
+# Output format
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+
+# Source code inclusion
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+STRIP_CODE_COMMENTS    = NO
+
+# General settings
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_METHODS  = YES
+
+# Class diagrams and graphs
+HAVE_DOT               = YES
+DOT_PATH               = 
+DOT_FONTNAME           = Helvetica
+DOT_FONTSIZE           = 10
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+UML_LOOK               = YES
+DOT_GRAPH_MAX_NODES    = 50
+MAX_DOT_GRAPH_DEPTH    = 0
+DOT_TRANSPARENT        = NO
+DOT_MULTI_TARGETS      = NO
+GENERATE_LEGEND        = YES
+DOT_CLEANUP            = YES
+
+# Call graphs
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+
+# Dependency graphs
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+
+# Member groups
+DISTRIBUTE_GROUP_DOC   = YES
+GROUP_NESTED_COMPOUNDS = YES
+SUBGROUPING            = YES
+
+# Advanced options
+ALPHABETICAL_INDEX     = YES
+FULL_PATH_NAMES        = YES
+SHOW_INCLUDE_FILES     = YES
+SHOW_USED_FILES        = YES
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+# Markdown support
+USE_MDFILE_AS_MAINPAGE = 
+MARKDOWN_SUPPORT       = YES
+
+# Warnings and progress
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = NO
+
+# External tools
+DOTFILE_DIRS           = 
+MSCGEN_PATH            = 
+PLANTUML_JAR_PATH      = 
+

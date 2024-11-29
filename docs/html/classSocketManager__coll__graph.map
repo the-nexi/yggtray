@@ -1,0 +1,3 @@
+<map id="SocketManager" name="SocketManager">
+<area shape="rect" id="Node000001" title="Manages communication with a UNIX domain socket." alt="" coords="5,5,141,117"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="ServiceManager.h" name="ServiceManager.h">
+<area shape="rect" id="Node000001" title="Header file for the ServiceManager class." alt="" coords="71,5,209,33"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,81,75,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,36,71,74,68,70,121,31"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="99,81,181,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="143,34,143,65,137,65,137,34"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="205,81,278,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="160,31,213,70,210,74,157,36"/>
+</map>

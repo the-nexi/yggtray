@@ -1,3 +1,11 @@
+/**
+ * @file SocketManager.h
+ * @brief Header file for the SocketManager class.
+ * 
+ * Handles communication with a UNIX domain socket for sending requests
+ * and receiving responses.
+ */
+
 #ifndef SOCKETMANAGER_H
 #define SOCKETMANAGER_H
 
@@ -7,11 +15,30 @@
 #include <QJsonDocument>
 #include <QDebug>
 
+/**
+ * @class SocketManager
+ * @brief Manages communication with a UNIX domain socket.
+ * 
+ * This class provides methods for sending requests to and receiving
+ * responses from a UNIX domain socket, as well as retrieving specific
+ * information such as the Yggdrasil IP address.
+ */
 class SocketManager {
 public:
+    /**
+     * @brief Constructs a SocketManager for the specified socket path.
+     * @param socketPath The path to the UNIX domain socket.
+     */
     explicit SocketManager(const QString &socketPath) : socketPath(socketPath) {}
 
-    // Send a request to the socket and receive the response
+    /**
+     * @brief Sends a request to the socket and receives the response.
+     * @param request A QJsonObject containing the request data.
+     * @return A QJsonObject containing the response, or an empty object if an error occurred.
+     * 
+     * This method handles connecting to the socket, sending the request,
+     * and reading the response. It logs any errors encountered during the process.
+     */
     QJsonObject sendRequest(const QJsonObject &request) {
         QLocalSocket socket;
         socket.connectToServer(socketPath);
@@ -43,7 +70,13 @@ public:
         return responseDoc.object();
     }
 
-    // Get Yggdrasil IP address
+    /**
+     * @brief Retrieves the Yggdrasil IP address from the socket.
+     * @return A QString containing the IP address, or "Unknown" if an error occurred.
+     * 
+     * This method sends a "getself" request to the socket and parses
+     * the response to extract the IP address.
+     */
     QString getYggdrasilIP() {
         QJsonObject response = sendRequest({{"request", "getself"}});
         if (response.contains("response") && response["response"].isObject()) {
@@ -53,7 +86,7 @@ public:
     }
 
 private:
-    QString socketPath;
+    QString socketPath; ///< The path to the UNIX domain socket.
 };
 
 #endif // SOCKETMANAGER_H
