@@ -1,9 +1,0 @@
-<map id="YggdrasilTray::updateTrayIcon" name="YggdrasilTray::updateTrayIcon">
-<area shape="rect" id="Node000001" title="Updates the tray icon and menu items." alt="" coords="5,36,222,64"/>
-<area shape="rect" id="Node000002" href="$classSocketManager.html#a80422812e4c898dcf1cabbb0f00b374c" title="Retrieves the Yggdrasil IP address from the socket." alt="" coords="270,5,492,33"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,35,254,31,254,36,222,40"/>
-<area shape="rect" id="Node000004" href="$classServiceManager.html#a639f994fdf89f178ab5dad6533eb8cf7" title="Checks if the service is currently running." alt="" coords="284,57,478,102"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="222,59,269,64,268,70,222,64"/>
-<area shape="rect" id="Node000003" href="$classSocketManager.html#a5c1ad70f71dad6f3e7721786b60b6cf4" title="Sends a request to the socket and receives the response." alt="" coords="540,5,753,33"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="493,16,524,16,524,22,493,22"/>
-</map>

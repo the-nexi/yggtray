@@ -1,5 +1,0 @@
-<map id="ServiceManager::startService" name="ServiceManager::startService">
-<area shape="rect" id="Node000001" title="Starts the specified service." alt="" coords="5,5,218,33"/>
-<area shape="rect" id="Node000002" href="$classServiceManager.html#a0dcd791360858425675852bbd1c47d28" title="Executes a systemctl command for the specified action." alt="" coords="266,5,519,33"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,16,250,16,250,22,218,22"/>
-</map>

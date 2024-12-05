@@ -1,7 +1,0 @@
-<map id="ServiceManager::startService" name="ServiceManager::startService">
-<area shape="rect" id="Node000001" title="Starts the specified service." alt="" coords="523,14,735,42"/>
-<area shape="rect" id="Node000002" href="$classYggdrasilTray.html#a6e951606176a31ed2fff7412917dedac" title="Toggles the Yggdrasil service between running and stopped states." alt="" coords="258,5,475,50"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="507,30,475,30,475,25,507,25"/>
-<area shape="rect" id="Node000003" href="$classYggdrasilTray.html#aef8abb097e07e9014a3d1328d7cabc34" title="Constructs the YggdrasilTray object." alt="" coords="5,14,210,42"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="242,30,210,30,210,25,242,25"/>
-</map>

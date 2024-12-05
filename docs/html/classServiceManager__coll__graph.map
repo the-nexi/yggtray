@@ -1,3 +1,0 @@
-<map id="ServiceManager" name="ServiceManager">
-<area shape="rect" id="Node000001" title="Handles system service management using systemctl commands." alt="" coords="5,5,160,160"/>
-</map>

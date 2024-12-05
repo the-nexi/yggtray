@@ -1,9 +1,0 @@
-<map id="YggdrasilTray" name="YggdrasilTray">
-<area shape="rect" id="Node000001" title="Manages the system tray interface for the Yggdrasil service." alt="" coords="80,225,265,486"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,48,71,117"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="64,129,111,224,106,226,59,132"/>
-<area shape="rect" id="Node000003" href="$classServiceManager.html" title="Handles system service management using systemctl commands." alt="" coords="95,5,250,160"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,160,175,208,170,208,170,160"/>
-<area shape="rect" id="Node000004" href="$classSocketManager.html" title="Manages communication with a UNIX domain socket." alt="" coords="274,27,410,139"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="324,140,294,202,277,228,273,225,289,200,319,137"/>
-</map>

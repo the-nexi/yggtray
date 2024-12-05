@@ -1,7 +1,0 @@
-<map id="YggdrasilTray::copyIP" name="YggdrasilTray::copyIP">
-<area shape="rect" id="Node000001" title="Copies the Yggdrasil IP address to the clipboard." alt="" coords="5,5,165,33"/>
-<area shape="rect" id="Node000002" href="$classSocketManager.html#a80422812e4c898dcf1cabbb0f00b374c" title="Retrieves the Yggdrasil IP address from the socket." alt="" coords="213,5,435,33"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,16,197,16,197,22,165,22"/>
-<area shape="rect" id="Node000003" href="$classSocketManager.html#a5c1ad70f71dad6f3e7721786b60b6cf4" title="Sends a request to the socket and receives the response." alt="" coords="483,5,696,33"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="436,16,467,16,467,22,436,22"/>
-</map>
