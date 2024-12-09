@@ -15,4 +15,4 @@ make -j$(nproc)
 cd ..
 ```
 ## Documentation
-This project has Doxygen documentation available, see the [doc](doc) directory.
+This project has Doxygen documentation available, doc directory will be created after compiling.
