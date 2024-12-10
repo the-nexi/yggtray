@@ -85,6 +85,7 @@
            doxygen))
     (inputs
      (list qtbase-5
+           qtwayland-5
            yggdrasil))
     (home-page "https://github.com/the-nexi/yggtray")
     (synopsis "Yggdrasil tray and control panel")
