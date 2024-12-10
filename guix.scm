@@ -63,13 +63,23 @@
     (arguments
      (list
       #:tests? #f                       ; No tests.
+      #:modules '((guix build cmake-build-system)
+                  (guix build qt-utils)
+                  (guix build utils))
+      #:imported-modules `(,@%cmake-build-system-modules
+                           (guix build qt-utils))
       #:phases #~(modify-phases %standard-phases
                    (replace 'install
                      (lambda _
                        (let ((bin (string-append #$output "/bin/")))
                          (mkdir-p bin)
                          (copy-file "tray"
-                                    (string-append bin "/yggtray"))))))))
+                                    (string-append bin "/yggtray")))))
+                   (add-after 'install 'wrap-qt
+                     (lambda* (#:key inputs #:allow-other-keys)
+                       (wrap-qt-program "yggtray"
+                                        #:output #$output
+                                        #:inputs inputs))))))
     (native-inputs
      (list cmake
            doxygen))
