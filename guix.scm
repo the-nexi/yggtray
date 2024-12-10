@@ -68,7 +68,6 @@
                      (lambda _
                        (let ((bin (string-append #$output "/bin/")))
                          (mkdir-p bin)
-                         (invoke "ls" "-lha")
                          (copy-file "tray"
                                     (string-append bin "/yggtray"))))))))
     (native-inputs
