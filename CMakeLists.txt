@@ -11,9 +11,9 @@ find_package(Qt5Network REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_executable(tray tray.cpp)
+add_executable(yggtray tray.cpp)
 
-target_link_libraries(tray Qt5::Widgets Qt5::Network)
+target_link_libraries(yggtray Qt5::Widgets Qt5::Network)
 
 # Add Doxygen support
 find_package(Doxygen)
