@@ -4,7 +4,8 @@
  * 
  * Handles the GUI logic for managing the Yggdrasil service, including
  * displaying the system tray icon, managing menu interactions, and
- * updating the service status and IP address.
+ * updating the service status and IP address. Integrates a first-time
+ * setup wizard to handle initial configuration tasks.
  */
 
 #include <QApplication>
@@ -17,6 +18,7 @@
 #include <QIcon>
 #include "ServiceManager.h"
 #include "SocketManager.h"
+#include "SetupWizard.h"
 
 /**
  * @brief Path to the Yggdrasil socket for communication.
@@ -196,7 +198,7 @@ private:
  * @brief Main function for the Yggdrasil Tray application.
  * 
  * Initializes the QApplication and the YggdrasilTray instance,
- * then starts the event loop.
+ * then starts the event loop. Integrates the setup wizard.
  * 
  * @param argc Argument count.
  * @param argv Argument vector.
@@ -205,16 +207,35 @@ private:
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
+    // Check for system tray availability
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        QMessageBox::critical(nullptr, "Error", "System tray not available!");
+        QMessageBox::critical(nullptr, "Error", "System tray is not available on this system.");
         return 1;
     }
 
     QApplication::setQuitOnLastWindowClosed(false);
 
-    YggdrasilTray tray;
+    // Argument parsing
+    bool forceSetup = false;
+    for (int i = 1; i < argc; ++i) {
+        QString arg = argv[i];
+        if (arg == "--setup") {
+            forceSetup = true;
+        }
+    }
+
+    // Run setup wizard
+    SetupWizard wizard;
+    wizard.run(forceSetup);
+
+    // Main application logic here (e.g., tray setup)
+    // Example:
+    QSystemTrayIcon trayIcon;
+    trayIcon.setIcon(QIcon::fromTheme("network-vpn"));
+    trayIcon.setToolTip("Yggdrasil Tray");
+    trayIcon.show();
+
     return app.exec();
 }
-
 #include "tray.moc"
 

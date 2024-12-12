@@ -17,7 +17,7 @@
  * @brief Handles system service management using systemctl commands.
  * 
  * This class provides methods to check the status of a service, start
- * a service, and stop a service using system commands.
+ * a service, stop a service, and enable a service using system commands.
  */
 class ServiceManager {
 public:
@@ -64,12 +64,22 @@ public:
         return executeCommand("stop");
     }
 
+    /**
+     * @brief Enables and starts the specified service immediately.
+     * @return True if the service was enabled and started successfully, false otherwise.
+     * 
+     * Executes the `systemctl enable --now` command using pkexec.
+     */
+    bool enableService() const {
+        return executeCommand("enable --now");
+    }
+
 private:
     QString serviceName; ///< The name of the service to manage.
 
     /**
      * @brief Executes a systemctl command for the specified action.
-     * @param action The action to perform (e.g., "start" or "stop").
+     * @param action The action to perform (e.g., "start", "stop", or "enable --now").
      * @return True if the command was successful, false otherwise.
      * 
      * This method uses pkexec to run the systemctl command with
@@ -77,7 +87,8 @@ private:
      */
     bool executeCommand(const QString &action) const {
         QProcess process;
-        QStringList arguments = {"systemctl", action, serviceName};
+        QStringList arguments = {"systemctl"};
+        arguments << action.split(' ') << serviceName;
         process.start("pkexec", arguments);
         process.waitForFinished();
 
