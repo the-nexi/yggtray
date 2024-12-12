@@ -28,7 +28,7 @@ jobs:
         rm -rf build
         mkdir build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
 
     # Step 4: Build the project
     - name: Build
@@ -41,14 +41,15 @@ jobs:
       run: |
         cd build
         tar -czvf yggtray-${{ github.run_id }}.tar.gz yggtray
-      # Upload the artifact
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: yggtray
-          path: build/yggtray-${{ github.run_id }}.tar.gz
 
-    # Step 6: Create a GitHub Release and attach the artifact
+    # Step 6: Upload the artifact
+    - name: Upload release artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: yggtray
+        path: build/yggtray-${{ github.run_id }}.tar.gz
+
+    # Step 7: Create a GitHub Release and attach the artifact
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
