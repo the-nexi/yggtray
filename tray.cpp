@@ -228,13 +228,10 @@ int main(int argc, char *argv[]) {
     SetupWizard wizard;
     wizard.run(forceSetup);
 
-    // Main application logic here (e.g., tray setup)
-    // Example:
-    QSystemTrayIcon trayIcon;
-    trayIcon.setIcon(QIcon::fromTheme("network-vpn"));
-    trayIcon.setToolTip("Yggdrasil Tray");
-    trayIcon.show();
-
+    // Create and initialize YggdrasilTray
+    YggdrasilTray tray;
+    
+    // Start the application event loop
     return app.exec();
 }
 #include "tray.moc"
