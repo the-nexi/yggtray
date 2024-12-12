@@ -1,0 +1,71 @@
+name: Build and Release Yggdrasil Tray
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code
+    - uses: actions/checkout@v4
+
+    # Step 2: Install dependencies
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake build-essential qtbase5-dev qt5-qmake
+
+    # Step 3: Configure the build
+    - name: Configure CMake
+      run: |
+        rm -rf build
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    # Step 4: Build the project
+    - name: Build
+      run: |
+        cd build
+        make VERBOSE=1
+
+    # Step 5: Package the artifact
+    - name: Package artifact
+      run: |
+        cd build
+        tar -czvf yggtray-${{ github.run_id }}.tar.gz yggtray
+      # Upload the artifact
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: yggtray
+          path: build/yggtray-${{ github.run_id }}.tar.gz
+
+    # Step 6: Create a GitHub Release and attach the artifact
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.run_number }}
+        release_name: Yggdrasil Tray v${{ github.run_number }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/yggtray-${{ github.run_id }}.tar.gz
+        asset_name: yggtray-${{ github.run_id }}.tar.gz
+        asset_content_type: application/gzip
