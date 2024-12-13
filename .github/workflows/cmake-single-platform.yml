@@ -2,12 +2,11 @@ name: Build and Release Yggdrasil Tray
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - "*" # Run only on tag pushes
+  workflow_dispatch: # Allow manual triggering of the workflow (optional)
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
@@ -18,11 +17,21 @@ jobs:
     # Step 1: Checkout the code
     - uses: actions/checkout@v4
 
-    # Step 2: Install dependencies
+    # Step 2: Extract the version from the Git tag
+    - name: Get Version from Git Tag
+      id: get_version
+      run: |
+        if [ -z "${{ github.ref_name }}" ]; then
+          echo "No tag found. Exiting."
+          exit 1
+        fi
+        echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+
+    # Step 3: Install dependencies
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y cmake build-essential qtbase5-dev qt5-qmake
 
-    # Step 3: Configure the build
+    # Step 4: Configure CMake
     - name: Configure CMake
       run: |
         rm -rf build
@@ -30,34 +39,34 @@ jobs:
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
 
-    # Step 4: Build the project
+    # Step 5: Build the project
     - name: Build
       run: |
         cd build
         make VERBOSE=1
 
-    # Step 5: Package the artifact
+    # Step 6: Package the artifact
     - name: Package artifact
       run: |
         cd build
-        tar -czvf yggtray-${{ github.run_id }}.tar.gz yggtray
+        tar -czvf yggtray-${{ env.VERSION }}.tar.gz yggtray
 
-    # Step 6: Upload the artifact
+    # Step 7: Upload the artifact
     - name: Upload release artifact
       uses: actions/upload-artifact@v3
       with:
         name: yggtray
-        path: build/yggtray-${{ github.run_id }}.tar.gz
+        path: build/yggtray-${{ env.VERSION }}.tar.gz
 
-    # Step 7: Create a GitHub Release and attach the artifact
+    # Step 8: Create Release
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.run_number }}
-        release_name: Yggdrasil Tray v${{ github.run_number }}
+        tag_name: ${{ env.VERSION }}
+        release_name: Yggdrasil Tray v${{ env.VERSION }}
         draft: false
         prerelease: false
 
@@ -67,6 +76,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/yggtray-${{ github.run_id }}.tar.gz
-        asset_name: yggtray-${{ github.run_id }}.tar.gz
+        asset_path: build/yggtray-${{ env.VERSION }}.tar.gz
+        asset_name: yggtray-${{ env.VERSION }}.tar.gz
         asset_content_type: application/gzip
