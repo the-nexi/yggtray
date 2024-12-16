@@ -69,12 +69,6 @@
       #:imported-modules `(,@%cmake-build-system-modules
                            (guix build qt-utils))
       #:phases #~(modify-phases %standard-phases
-                   (replace 'install
-                     (lambda _
-                       (let ((bin (string-append #$output "/bin/")))
-                         (mkdir-p bin)
-                         (copy-file "tray"
-                                    (string-append bin "/yggtray")))))
                    (add-after 'install 'wrap-qt
                      (lambda* (#:key inputs #:allow-other-keys)
                        (wrap-qt-program "yggtray"
