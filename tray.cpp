@@ -16,6 +16,7 @@
 #include <QTimer>
 #include <QClipboard>
 #include <QIcon>
+#include <cstdio>
 #include "ServiceManager.h"
 #include "SocketManager.h"
 #include "SetupWizard.h"
@@ -207,6 +208,22 @@ private:
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
+    // Argument parsing
+    bool forceSetup = false;
+    for (int i = 1; i < argc; ++i) {
+        QString arg = argv[i];
+
+        // Handle --version argument
+        if (arg == "--version") {
+            printf("yggtray version %s\n", YGGTRAY_VERSION);
+            return 0;
+        }
+
+        if (arg == "--setup") {
+            forceSetup = true;
+        }
+    }
+
     // Check for system tray availability
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
         QMessageBox::critical(nullptr, "Error", "System tray is not available on this system.");
@@ -214,15 +231,6 @@ int main(int argc, char *argv[]) {
     }
 
     QApplication::setQuitOnLastWindowClosed(false);
-
-    // Argument parsing
-    bool forceSetup = false;
-    for (int i = 1; i < argc; ++i) {
-        QString arg = argv[i];
-        if (arg == "--setup") {
-            forceSetup = true;
-        }
-    }
 
     // Run setup wizard
     SetupWizard wizard;
@@ -234,5 +242,6 @@ int main(int argc, char *argv[]) {
     // Start the application event loop
     return app.exec();
 }
+
 #include "tray.moc"
 

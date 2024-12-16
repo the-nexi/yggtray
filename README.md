@@ -7,6 +7,11 @@ It also provides first setup wizard, which adds user to "yggdrasil" group in ord
 
 This wiard can be launched by running `yggtray --setup` command.
 
+## CLI arguments
+
+* `--setup` - show setup wizard
+* `--version` - show version
+
 ## Building
 
 ```
@@ -16,7 +21,7 @@ mkdir build
 cd build
 cmake ..
 make -j$(nproc)
-cd ..
+cd .. 
 ```
 ## Documentation
 This project has Doxygen documentation available, doc directory will be created after compiling.

@@ -4,6 +4,10 @@ project(YggdrasilTray)
 
 set(CMAKE_CXX_STANDARD 14)
 
+# Define the version
+set(YGGTRAY_VERSION "0.1.1")
+add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
+
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Network REQUIRED)
 
