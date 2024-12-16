@@ -15,9 +15,43 @@ find_package(Qt5Network REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+# Add executable
 add_executable(yggtray tray.cpp)
 
 target_link_libraries(yggtray Qt5::Widgets Qt5::Network)
+
+# Define installation directories
+set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin")
+set(INSTALL_DOC_DIR "${CMAKE_INSTALL_PREFIX}/share/doc/${PROJECT_NAME}")
+set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man/man1")
+
+# Add installation rules
+install(TARGETS yggtray DESTINATION ${INSTALL_BIN_DIR})
+
+# Install documentation (if generated)
+if (DOXYGEN_FOUND)
+    install(DIRECTORY ${DOXYGEN_OUT} DESTINATION ${INSTALL_DOC_DIR})
+endif ()
+
+# Optional: Install a man page
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/yggtray.1 DESTINATION ${INSTALL_MAN_DIR})
+
+# Add a target to generate a package
+include(CPack)
+
+# CPack configuration
+set(CPACK_PACKAGE_NAME "yggtray")
+set(CPACK_PACKAGE_VERSION ${YGGTRAY_VERSION})
+set(CPACK_PACKAGE_DESCRIPTION "System tray application for Yggdrasil")
+set(CPACK_PACKAGE_VENDOR "Nexi (Oleg Chagaev)")
+set(CPACK_PACKAGE_CONTACT "olg5702olg@protonmail.com")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Nexi (Oleg Chagaev)")
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-or-later")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
+
+# Include CPack module to enable packaging
+include(CPack)
 
 # Add Doxygen support
 find_package(Doxygen)
