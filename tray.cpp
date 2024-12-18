@@ -16,15 +16,21 @@
 #include <QTimer>
 #include <QClipboard>
 #include <QIcon>
+#include <QStringList>
 #include <cstdio>
 #include "ServiceManager.h"
 #include "SocketManager.h"
 #include "SetupWizard.h"
 
 /**
- * @brief Path to the Yggdrasil socket for communication.
+ * @brief Path candidates for the Yggdrasil socket.
  */
-const QString YGG_SOCKET_PATH = "/var/run/yggdrasil.sock";
+const QStringList POSSIBLE_YGG_SOCKET_PATHS = {
+    "/var/run/yggdrasil.sock",    // Default path
+	"/var/run/yggdrasil/yggdrasil.sock",	//Ubuntu path
+    "/run/yggdrasil.sock",        // Alternate path for some distributions
+    "/tmp/yggdrasil.sock"         // Fallback path
+};
 
 /**
  * @brief Icon to display when the Yggdrasil service is running.
@@ -59,7 +65,7 @@ public:
     explicit YggdrasilTray(QObject *parent = nullptr)
         : QObject(parent),
           serviceManager("yggdrasil"),
-          socketManager(YGG_SOCKET_PATH) {
+          socketManager(POSSIBLE_YGG_SOCKET_PATHS) {
         trayIcon = new QSystemTrayIcon(this);
         trayIcon->setIcon(QIcon::fromTheme(ICON_NOT_RUNNING));
         trayIcon->setToolTip(TOOLTIP);
@@ -112,10 +118,6 @@ public:
 private slots:
     /**
      * @brief Toggles the Yggdrasil service between running and stopped states.
-     * 
-     * This function checks the current status of the Yggdrasil service
-     * and either starts or stops it. It updates the tray icon and displays
-     * a message indicating the result of the operation.
      */
     void toggleYggdrasilService() {
         bool success;
@@ -140,10 +142,6 @@ private slots:
 
     /**
      * @brief Copies the Yggdrasil IP address to the clipboard.
-     * 
-     * Retrieves the Yggdrasil IP address from the socket manager and
-     * copies it to the system clipboard. Displays a message indicating
-     * the result of the operation.
      */
     void copyIP() {
         QString ip = socketManager.getYggdrasilIP();
@@ -157,9 +155,6 @@ private slots:
 
     /**
      * @brief Updates the tray icon and menu items.
-     * 
-     * Retrieves the current Yggdrasil service status and IP address,
-     * then updates the tray icon and menu items to reflect this information.
      */
     void updateTrayIcon() {
         QString status = serviceManager.isServiceRunning() ? "Running" : "Not Running";
@@ -174,9 +169,6 @@ private slots:
     /**
      * @brief Handles tray icon activation events.
      * @param reason The reason for the activation event.
-     * 
-     * Displays the tray menu when the tray icon is activated
-     * via a left or right click.
      */
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason) {
         if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::Context) {
@@ -197,13 +189,6 @@ private:
 
 /**
  * @brief Main function for the Yggdrasil Tray application.
- * 
- * Initializes the QApplication and the YggdrasilTray instance,
- * then starts the event loop. Integrates the setup wizard.
- * 
- * @param argc Argument count.
- * @param argv Argument vector.
- * @return Exit code.
  */
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
@@ -213,7 +198,6 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; ++i) {
         QString arg = argv[i];
 
-        // Handle --version argument
         if (arg == "--version") {
             printf("yggtray version %s\n", YGGTRAY_VERSION);
             return 0;
@@ -224,7 +208,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Check for system tray availability
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
         QMessageBox::critical(nullptr, "Error", "System tray is not available on this system.");
         return 1;
@@ -232,14 +215,11 @@ int main(int argc, char *argv[]) {
 
     QApplication::setQuitOnLastWindowClosed(false);
 
-    // Run setup wizard
     SetupWizard wizard;
     wizard.run(forceSetup);
 
-    // Create and initialize YggdrasilTray
     YggdrasilTray tray;
-    
-    // Start the application event loop
+
     return app.exec();
 }
 

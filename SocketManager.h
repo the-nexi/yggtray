@@ -1,50 +1,45 @@
-/**
- * @file SocketManager.h
- * @brief Header file for the SocketManager class.
- * 
- * Handles communication with a UNIX domain socket for sending requests
- * and receiving responses.
- */
-
 #ifndef SOCKETMANAGER_H
 #define SOCKETMANAGER_H
 
 #include <QString>
+#include <QStringList>
 #include <QJsonObject>
 #include <QLocalSocket>
 #include <QJsonDocument>
 #include <QDebug>
+#include <QFile>
 
 /**
  * @class SocketManager
  * @brief Manages communication with a UNIX domain socket.
- * 
- * This class provides methods for sending requests to and receiving
- * responses from a UNIX domain socket, as well as retrieving specific
- * information such as the Yggdrasil IP address.
  */
 class SocketManager {
 public:
     /**
-     * @brief Constructs a SocketManager for the specified socket path.
-     * @param socketPath The path to the UNIX domain socket.
+     * @brief Constructs a SocketManager with multiple possible socket paths.
+     * @param possibleSocketPaths A list of potential UNIX domain socket paths.
      */
-    explicit SocketManager(const QString &socketPath) : socketPath(socketPath) {}
+    explicit SocketManager(const QStringList &possibleSocketPaths)
+        : socketPaths(possibleSocketPaths), activeSocketPath("") {
+        determineSocketPath();
+    }
 
     /**
      * @brief Sends a request to the socket and receives the response.
      * @param request A QJsonObject containing the request data.
      * @return A QJsonObject containing the response, or an empty object if an error occurred.
-     * 
-     * This method handles connecting to the socket, sending the request,
-     * and reading the response. It logs any errors encountered during the process.
      */
     QJsonObject sendRequest(const QJsonObject &request) {
+        if (activeSocketPath.isEmpty()) {
+            qDebug() << "No valid socket path found.";
+            return {};
+        }
+
         QLocalSocket socket;
-        socket.connectToServer(socketPath);
+        socket.connectToServer(activeSocketPath);
 
         if (!socket.waitForConnected(3000)) {
-            qDebug() << "Failed to connect to socket at" << socketPath;
+            qDebug() << "Failed to connect to socket at" << activeSocketPath;
             return {};
         }
 
@@ -73,9 +68,6 @@ public:
     /**
      * @brief Retrieves the Yggdrasil IP address from the socket.
      * @return A QString containing the IP address, or "Unknown" if an error occurred.
-     * 
-     * This method sends a "getself" request to the socket and parses
-     * the response to extract the IP address.
      */
     QString getYggdrasilIP() {
         QJsonObject response = sendRequest({{"request", "getself"}});
@@ -86,7 +78,31 @@ public:
     }
 
 private:
-    QString socketPath; ///< The path to the UNIX domain socket.
+    QStringList socketPaths;   ///< List of possible socket paths.
+    QString activeSocketPath; ///< The active socket path.
+
+    /**
+     * @brief Determines the first valid socket path from the list of candidates.
+     */
+    void determineSocketPath() {
+        for (const QString &path : socketPaths) {
+            qDebug() << "Checking socket path:" << path;
+            if (QFile::exists(path)) {
+                QLocalSocket socket;
+                socket.connectToServer(path);
+                if (socket.waitForConnected(500)) {
+                    activeSocketPath = path;
+                    qDebug() << "Using active socket path:" << activeSocketPath;
+                    return;
+                } else {
+                    qDebug() << "Socket path exists but cannot be connected to:" << path;
+                }
+            } else {
+                qDebug() << "Socket path does not exist:" << path;
+            }
+        }
+        qDebug() << "No valid socket path found among candidates.";
+    }
 };
 
 #endif // SOCKETMANAGER_H
