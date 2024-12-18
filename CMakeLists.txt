@@ -28,13 +28,17 @@ set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man/man1")
 # Add installation rules
 install(TARGETS yggtray DESTINATION ${INSTALL_BIN_DIR})
 
-# Install documentation (if generated)
-if (DOXYGEN_FOUND)
-    install(DIRECTORY ${DOXYGEN_OUT} DESTINATION ${INSTALL_DOC_DIR})
-endif ()
-
 # Optional: Install a man page
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/yggtray.1 DESTINATION ${INSTALL_MAN_DIR})
+
+# Add uninstall target
+if(NOT TARGET uninstall)
+    add_custom_target(uninstall
+        COMMAND ${CMAKE_COMMAND} -E remove -f "${INSTALL_BIN_DIR}/yggtray"
+                                   "${INSTALL_MAN_DIR}/yggtray.1"
+        COMMENT "Uninstalling YggdrasilTray"
+    )
+endif()
 
 # Add a target to generate a package
 include(CPack)

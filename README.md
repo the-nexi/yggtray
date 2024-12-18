@@ -12,6 +12,18 @@ This wiard can be launched by running `yggtray --setup` command.
 * `--setup` - show setup wizard
 * `--version` - show version
 
+
+## Installation
+
+```
+./make.sh
+cd build/
+sudo make install
+
+#to uninstall:
+sudo make uninstall
+```
+
 ## Building
 
 ```
