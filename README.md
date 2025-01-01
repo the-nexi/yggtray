@@ -37,3 +37,11 @@ cd ..
 ```
 ## Documentation
 This project has Doxygen documentation available, doc directory will be created after compiling.
+
+## License
+
+This project is licensed under the GNU General Public License v3 (GNU GPL v3).  
+
+Icons used in this application are sourced from the [Qogir-kde](https://github.com/vinceliuice/Qogir-kde) icon theme, which is also licensed under GNU GPL v3.  
+
+

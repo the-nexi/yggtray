@@ -5,7 +5,7 @@ project(YggdrasilTray)
 set(CMAKE_CXX_STANDARD 14)
 
 # Define the version
-set(YGGTRAY_VERSION "0.1.2")
+set(YGGTRAY_VERSION "0.1.3")
 add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
 
 find_package(Qt5Widgets REQUIRED)
@@ -15,9 +15,11 @@ find_package(Qt5Network REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Add executable
-add_executable(yggtray tray.cpp)
+# Add resources
+qt5_add_resources(RESOURCES resources.qrc)
 
+# Add executable
+add_executable(yggtray tray.cpp ${RESOURCES})
 target_link_libraries(yggtray Qt5::Widgets Qt5::Network)
 
 # Define installation directories

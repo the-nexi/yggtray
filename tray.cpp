@@ -17,6 +17,7 @@
 #include <QClipboard>
 #include <QIcon>
 #include <QStringList>
+#include <QPixmap>
 #include <cstdio>
 #include "ServiceManager.h"
 #include "SocketManager.h"
@@ -27,7 +28,7 @@
  */
 const QStringList POSSIBLE_YGG_SOCKET_PATHS = {
     "/var/run/yggdrasil.sock",    // Default path
-	"/var/run/yggdrasil/yggdrasil.sock",	//Ubuntu path
+    "/var/run/yggdrasil/yggdrasil.sock", // Ubuntu path
     "/run/yggdrasil.sock",        // Alternate path for some distributions
     "/tmp/yggdrasil.sock"         // Fallback path
 };
@@ -35,12 +36,12 @@ const QStringList POSSIBLE_YGG_SOCKET_PATHS = {
 /**
  * @brief Icon to display when the Yggdrasil service is running.
  */
-const QString ICON_RUNNING = "network-vpn";
+const QString ICON_RUNNING = ":/icons/yggtray_running.png";
 
 /**
  * @brief Icon to display when the Yggdrasil service is not running.
  */
-const QString ICON_NOT_RUNNING = "network-offline";
+const QString ICON_NOT_RUNNING = ":/icons/yggtray_not_running.png";
 
 /**
  * @brief Tooltip for the tray icon.
@@ -50,24 +51,17 @@ const QString TOOLTIP = "Yggdrasil Tray";
 /**
  * @class YggdrasilTray
  * @brief Manages the system tray interface for the Yggdrasil service.
- * 
- * This class handles GUI interactions, service toggling, and updates
- * the tray icon based on the Yggdrasil service status.
  */
 class YggdrasilTray : public QObject {
     Q_OBJECT
 
 public:
-    /**
-     * @brief Constructs the YggdrasilTray object.
-     * @param parent Pointer to the parent QObject, if any.
-     */
     explicit YggdrasilTray(QObject *parent = nullptr)
         : QObject(parent),
           serviceManager("yggdrasil"),
           socketManager(POSSIBLE_YGG_SOCKET_PATHS) {
         trayIcon = new QSystemTrayIcon(this);
-        trayIcon->setIcon(QIcon::fromTheme(ICON_NOT_RUNNING));
+        trayIcon->setIcon(QIcon(ICON_NOT_RUNNING));
         trayIcon->setToolTip(TOOLTIP);
 
         trayMenu = new QMenu();
@@ -116,9 +110,6 @@ public:
     }
 
 private slots:
-    /**
-     * @brief Toggles the Yggdrasil service between running and stopped states.
-     */
     void toggleYggdrasilService() {
         bool success;
         QString action;
@@ -140,9 +131,6 @@ private slots:
         updateTrayIcon();
     }
 
-    /**
-     * @brief Copies the Yggdrasil IP address to the clipboard.
-     */
     void copyIP() {
         QString ip = socketManager.getYggdrasilIP();
         if (!ip.isEmpty()) {
@@ -153,9 +141,6 @@ private slots:
         }
     }
 
-    /**
-     * @brief Updates the tray icon and menu items.
-     */
     void updateTrayIcon() {
         QString status = serviceManager.isServiceRunning() ? "Running" : "Not Running";
         QString ip = socketManager.getYggdrasilIP();
@@ -163,13 +148,9 @@ private slots:
         statusAction->setText("Status: " + status);
         ipAction->setText("IP: " + ip);
 
-        trayIcon->setIcon(QIcon::fromTheme(status == "Running" ? ICON_RUNNING : ICON_NOT_RUNNING));
+        trayIcon->setIcon(QIcon(status == "Running" ? ICON_RUNNING : ICON_NOT_RUNNING));
     }
 
-    /**
-     * @brief Handles tray icon activation events.
-     * @param reason The reason for the activation event.
-     */
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason) {
         if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::Context) {
             trayMenu->popup(QCursor::pos());
@@ -177,14 +158,14 @@ private slots:
     }
 
 private:
-    QSystemTrayIcon *trayIcon;         ///< The system tray icon.
-    QMenu *trayMenu;                   ///< The menu displayed in the system tray.
-    QAction *statusAction;             ///< Action displaying the service status.
-    QAction *ipAction;                 ///< Action displaying the Yggdrasil IP address.
-    QAction *toggleAction;             ///< Action to toggle the Yggdrasil service.
-    QAction *copyIPAction;             ///< Action to copy the Yggdrasil IP address.
-    ServiceManager serviceManager;     ///< Manager for service-related tasks.
-    SocketManager socketManager;       ///< Manager for socket-related tasks.
+    QSystemTrayIcon *trayIcon;
+    QMenu *trayMenu;
+    QAction *statusAction;
+    QAction *ipAction;
+    QAction *toggleAction;
+    QAction *copyIPAction;
+    ServiceManager serviceManager;
+    SocketManager socketManager;
 };
 
 /**

@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>yggtray_running.png</file>
+        <file>yggtray_not_running.png</file>
+    </qresource>
+</RCC>
+
