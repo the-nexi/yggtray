@@ -19,8 +19,10 @@ This wiard can be launched by running `yggtray --setup` command.
 ./make.sh
 cd build/
 sudo make install
+```
 
-#to uninstall:
+to uninstall:
+```
 sudo make uninstall
 ```
 
