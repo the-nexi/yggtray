@@ -122,9 +122,7 @@ private slots:
             action = "started";
         }
 
-        if (success) {
-            QMessageBox::information(nullptr, "Service Toggle", "Yggdrasil service successfully " + action + ".");
-        } else {
+        if (!success) {
             QMessageBox::critical(nullptr, "Service Toggle", "Failed to toggle Yggdrasil service.");
         }
 
