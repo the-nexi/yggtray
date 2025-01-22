@@ -18,6 +18,7 @@
 #include <QIcon>
 #include <QStringList>
 #include <QPixmap>
+#include <QSharedMemory>
 #include <cstdio>
 #include "ServiceManager.h"
 #include "SocketManager.h"
@@ -171,6 +172,19 @@ private:
  */
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
+
+    // Check for existing instance
+    QSharedMemory sharedMem("YggdrasilTrayInstance");
+    
+    // Attempt to clean up any stale shared memory segment
+    if (sharedMem.attach()) {
+        sharedMem.detach();
+    }
+
+    if (!sharedMem.create(1)) {
+        QMessageBox::warning(nullptr, "YggdrasilTray", "Another instance is already running.");
+        return 1;
+    }
 
     // Argument parsing
     bool forceSetup = false;
