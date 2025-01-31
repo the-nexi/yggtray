@@ -11,6 +11,7 @@ add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Network REQUIRED)
+find_package(Qt5 COMPONENTS Core LinguistTools REQUIRED)
 
 # Enable AUTOMOC to process Q_OBJECT macros
 set(CMAKE_AUTOMOC ON)
