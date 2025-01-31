@@ -68,31 +68,31 @@ public:
         trayMenu = new QMenu();
 
         // Status menu item
-        statusAction = new QAction("Status: Unknown", trayMenu);
+        statusAction = new QAction(tr("Status: Unknown"), trayMenu);
         statusAction->setDisabled(true);
         trayMenu->addAction(statusAction);
 
         // IP address menu item
-        ipAction = new QAction("IP: Unknown", trayMenu);
+        ipAction = new QAction(tr("IP: Unknown"), trayMenu);
         ipAction->setDisabled(true);
         trayMenu->addAction(ipAction);
 
         trayMenu->addSeparator();
 
         // Toggle Yggdrasil service action
-        toggleAction = new QAction("Start/Stop Yggdrasil", trayMenu);
+        toggleAction = new QAction(tr("Start/Stop Yggdrasil"), trayMenu);
         connect(toggleAction, &QAction::triggered, this, &YggdrasilTray::toggleYggdrasilService);
         trayMenu->addAction(toggleAction);
 
         // Copy IP action
-        copyIPAction = new QAction("Copy IP", trayMenu);
+        copyIPAction = new QAction(tr("Copy IP"), trayMenu);
         connect(copyIPAction, &QAction::triggered, this, &YggdrasilTray::copyIP);
         trayMenu->addAction(copyIPAction);
 
         trayMenu->addSeparator();
 
         // Quit action
-        QAction *quitAction = new QAction("Quit", trayMenu);
+        QAction *quitAction = new QAction(tr("Quit"), trayMenu);
         connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
         trayMenu->addAction(quitAction);
 
@@ -124,7 +124,8 @@ private slots:
         }
 
         if (!success) {
-            QMessageBox::critical(nullptr, "Service Toggle", "Failed to toggle Yggdrasil service.");
+            QMessageBox::critical(nullptr, "Service Toggle",
+                                  tr("Failed to toggle Yggdrasil service."));
         }
 
         updateTrayIcon();
@@ -134,9 +135,13 @@ private slots:
         QString ip = socketManager.getYggdrasilIP();
         if (!ip.isEmpty()) {
             QApplication::clipboard()->setText(ip);
-            QMessageBox::information(nullptr, "Copy IP", "IP copied to clipboard: " + ip);
+            QMessageBox::information(nullptr,
+                                     tr("Copy IP"),
+                                     tr("IP copied to clipboard: ") + ip);
         } else {
-            QMessageBox::warning(nullptr, "Copy IP", "Failed to retrieve IP.");
+            QMessageBox::warning(nullptr,
+                                 tr("Copy IP"),
+                                 tr("Failed to retrieve IP."));
         }
     }
 
@@ -144,7 +149,7 @@ private slots:
         QString status = serviceManager.isServiceRunning() ? "Running" : "Not Running";
         QString ip = socketManager.getYggdrasilIP();
 
-        statusAction->setText("Status: " + status);
+        statusAction->setText(tr("Status: ") + status);
         ipAction->setText("IP: " + ip);
 
         trayIcon->setIcon(QIcon(status == "Running" ? ICON_RUNNING : ICON_NOT_RUNNING));
@@ -182,7 +187,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (!sharedMem.create(1)) {
-        QMessageBox::warning(nullptr, "YggdrasilTray", "Another instance is already running.");
+        QMessageBox::warning(nullptr,
+                             "YggdrasilTray",
+                             YggdrasilTray::tr("Another instance is already running."));
         return 1;
     }
 
@@ -202,7 +209,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        QMessageBox::critical(nullptr, "Error", "System tray is not available on this system.");
+        QMessageBox::critical(nullptr,
+                              YggdrasilTray::tr("Error"),
+                              YggdrasilTray::tr("System tray is not available on this system."));
         return 1;
     }
 
