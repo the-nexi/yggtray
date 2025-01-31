@@ -37,6 +37,20 @@ cmake ..
 make -j$(nproc)
 cd .. 
 ```
+
+## AppImage
+
+To build a portable AppImage:
+```
+./make.sh appimage
+```
+
+This will create `YggdrasilTray-<version>-x86_64.AppImage` in the build directory. The AppImage can be run on any Linux system without installation:
+```
+chmod +x build/YggdrasilTray-*-x86_64.AppImage
+./build/YggdrasilTray-*-x86_64.AppImage
+```
+
 ## Documentation
 This project has Doxygen documentation available, doc directory will be created after compiling.
 

@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(YggdrasilTray)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_INSTALL_PREFIX "/usr")
 
 # Define the version
 set(YGGTRAY_VERSION "0.1.5")
@@ -22,6 +23,11 @@ qt5_add_resources(RESOURCES resources.qrc)
 add_executable(yggtray tray.cpp ${RESOURCES})
 target_link_libraries(yggtray Qt5::Widgets Qt5::Network)
 
+# Copy icon file to build directory
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/yggtray_running.png
+              ${CMAKE_CURRENT_BINARY_DIR}/yggtray_running.png
+              COPYONLY)
+
 # Define installation directories
 set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin")
 set(INSTALL_DOC_DIR "${CMAKE_INSTALL_PREFIX}/share/doc/${PROJECT_NAME}")
@@ -38,6 +44,8 @@ if(NOT TARGET uninstall)
     add_custom_target(uninstall
         COMMAND ${CMAKE_COMMAND} -E remove -f "${INSTALL_BIN_DIR}/yggtray"
                                    "${INSTALL_MAN_DIR}/yggtray.1"
+                                   "${CMAKE_INSTALL_PREFIX}/share/applications/yggtray.desktop"
+                                   "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps/yggtray_running.png"
         COMMENT "Uninstalling YggdrasilTray"
     )
 endif()
@@ -56,6 +64,39 @@ set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_RPM_PACKAGE_LICENSE "GPL-3.0-or-later")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
 
+# Create desktop file content
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/yggtray.desktop
+"[Desktop Entry]
+Type=Application
+Name=YggdrasilTray
+Comment=System tray application for Yggdrasil
+Exec=yggtray
+Icon=yggtray_running
+Categories=Network;System;
+Terminal=false")
+
+# Install desktop file and icon
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/yggtray_running.png
+    DESTINATION share/icons/hicolor/256x256/apps
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/yggtray.desktop
+    DESTINATION share/applications
+)
+
+# AppImage target
+add_custom_target(appimage
+    DEPENDS yggtray
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/AppDir
+    COMMAND ${CMAKE_COMMAND} -E env DESTDIR=${CMAKE_BINARY_DIR}/AppDir ${CMAKE_COMMAND} --install .
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/AppDir/usr/share/applications/yggtray.desktop ${CMAKE_BINARY_DIR}/AppDir/yggtray.desktop
+    COMMAND ${CMAKE_COMMAND} -E create_symlink usr/bin/yggtray ${CMAKE_BINARY_DIR}/AppDir/AppRun
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/yggtray_running.png ${CMAKE_BINARY_DIR}/AppDir/yggtray_running.png
+    COMMAND wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+    COMMAND chmod +x appimagetool-x86_64.AppImage
+    COMMAND VERSION=${YGGTRAY_VERSION} ./appimagetool-x86_64.AppImage AppDir
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Creating AppImage..."
+)
 
 # Add Doxygen support
 find_package(Doxygen)
