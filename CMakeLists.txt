@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_INSTALL_PREFIX "/usr")
 
 # Define the version
-set(YGGTRAY_VERSION "0.1.5")
+set(YGGTRAY_VERSION "0.1.6")
 add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
 
 find_package(Qt5Widgets REQUIRED)
