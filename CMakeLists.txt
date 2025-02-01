@@ -18,6 +18,7 @@ set(TS_FILES
 )
 
 qt5_add_translation(QM_FILES ${TS_FILES})
+set (QT_TRANSLATIONS_DIR "${CMAKE_INSTALL_PREFIX}/share/qt5/translations")
 
 add_custom_target(translations DEPENDS ${QM_FILES})
 
