@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 project(YggdrasilTray)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_INSTALL_PREFIX "/usr")
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Installation prefix" FORCE)
+endif()
 
 # Define the version
 set(YGGTRAY_VERSION "0.1.6")
