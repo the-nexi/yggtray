@@ -58,24 +58,14 @@ jobs:
         name: yggtray
         path: build/yggtray-${{ env.VERSION }}.tar.gz
 
-    # Step 8: Create Release
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+    # Step 8: Create Release and Upload Asset
+    - name: Create Release and Upload Asset
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.VERSION }}
-        release_name: Yggdrasil Tray v${{ env.VERSION }}
-        draft: false
-        prerelease: false
+        GH_REPO: ${{ github.repository }}
+      run: |
+        gh release create "${{ env.VERSION }}" \
+          --title "Yggdrasil Tray v${{ env.VERSION }}" \
+          --notes "Release v${{ env.VERSION }}" \
+          "build/yggtray-${{ env.VERSION }}.tar.gz"
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/yggtray-${{ env.VERSION }}.tar.gz
-        asset_name: yggtray-${{ env.VERSION }}.tar.gz
-        asset_content_type: application/gzip
