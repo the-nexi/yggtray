@@ -19,6 +19,7 @@
 #include <QStringList>
 #include <QPixmap>
 #include <QSharedMemory>
+#include <QTranslator>
 #include <cstdio>
 #include "ServiceManager.h"
 #include "SocketManager.h"
@@ -177,6 +178,11 @@ private:
  */
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
+
+    QTranslator translator;
+    if (translator.load(":/translations/yggtray.qm")) {
+        app.installTranslator(&translator);
+    }
 
     // Check for existing instance
     QSharedMemory sharedMem("YggdrasilTrayInstance");
