@@ -12,6 +12,14 @@
       <translation>Статус: Неизвестен</translation>
     </message>
     <message>
+      <source>Running</source>
+      <translation>Запущен</translation>
+    </message>
+    <message>
+      <source>Not Running</source>
+      <translation>Не запущен</translation>
+    </message>
+    <message>
       <source>IP: Unknown</source>
       <translation>IP-адрес: Неизвестен</translation>
     </message>

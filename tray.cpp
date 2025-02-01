@@ -147,13 +147,15 @@ private slots:
     }
 
     void updateTrayIcon() {
-        QString status = serviceManager.isServiceRunning() ? "Running" : "Not Running";
+        QString status = serviceManager.isServiceRunning()
+            ? tr("Running") : tr("Not Running");
         QString ip = socketManager.getYggdrasilIP();
 
         statusAction->setText(tr("Status: ") + status);
         ipAction->setText("IP: " + ip);
 
-        trayIcon->setIcon(QIcon(status == "Running" ? ICON_RUNNING : ICON_NOT_RUNNING));
+        trayIcon->setIcon(QIcon(status == tr("Running")
+                                ? ICON_RUNNING : ICON_NOT_RUNNING));
     }
 
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason) {
