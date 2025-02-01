@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="yggtray_running.png">@CMAKE_CURRENT_SOURCE_DIR@/yggtray_running.png</file>
+        <file alias="yggtray_not_running.png">@CMAKE_CURRENT_SOURCE_DIR@/yggtray_not_running.png</file>
+    </qresource>
+    <qresource prefix="/translations" lang="ru">
+      <file alias="yggtray.qm">@CMAKE_BINARY_DIR@/yggtray_ru.qm</file>
+    </qresource>
+
+</RCC>
+

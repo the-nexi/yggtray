@@ -40,8 +40,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTORCC ON)
 
+set(RESOURCES_FILE resources.qrc)
+configure_file("${RESOURCES_FILE}.in" "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
+set_source_files_properties("${RESOURCES_FILE}" PROPERTIES GENERATED TRUE)
+
 # Add resources
-qt5_add_resources(RESOURCES resources.qrc)
+qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 
 # Add executable
 add_executable(yggtray tray.cpp ${RESOURCES} ${QM_FILES})
