@@ -11,16 +11,45 @@ add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Network REQUIRED)
+find_package(Qt5 COMPONENTS Core LinguistTools REQUIRED)
+
+set(TS_FILES
+  i18n/yggtray_ru.ts
+)
+
+qt5_add_translation(QM_FILES ${TS_FILES})
+set (QT_TRANSLATIONS_DIR "${CMAKE_INSTALL_PREFIX}/share/qt5/translations")
+
+add_custom_target(translations DEPENDS ${QM_FILES})
+
+if(NOT QT_TRANSLATIONS_DIR)
+  # If this directory is missing, we are in a Qt5 environment.
+  # Extract the qmake executable location
+  get_target_property(QT5_QMAKE_EXECUTABLE Qt5::qmake IMPORTED_LOCATION)
+  # Ask Qt5 where to put the translations
+  execute_process( COMMAND ${QT5_QMAKE_EXECUTABLE}
+    -query QT_INSTALL_TRANSLATIONS
+    OUTPUT_VARIABLE qt_translations_dir OUTPUT_STRIP_TRAILING_WHITESPACE )
+  # make sure we have / and not \ as qmake gives on windows
+  file( TO_CMAKE_PATH "${qt_translations_dir}" qt_translations_dir)
+  set( QT_TRANSLATIONS_DIR ${qt_translations_dir} CACHE PATH
+    "The location of the Qt translations" FORCE)
+endif()
 
 # Enable AUTOMOC to process Q_OBJECT macros
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTORCC ON)
+
+set(RESOURCES_FILE resources.qrc)
+configure_file("${RESOURCES_FILE}.in" "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
+set_source_files_properties("${RESOURCES_FILE}" PROPERTIES GENERATED TRUE)
 
 # Add resources
-qt5_add_resources(RESOURCES resources.qrc)
+qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 
 # Add executable
-add_executable(yggtray tray.cpp ${RESOURCES})
+add_executable(yggtray tray.cpp ${RESOURCES} ${QM_FILES})
 target_link_libraries(yggtray Qt5::Widgets Qt5::Network)
 
 # Copy icon file to build directory
@@ -35,6 +64,8 @@ set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man/man1")
 
 # Add installation rules
 install(TARGETS yggtray DESTINATION ${INSTALL_BIN_DIR})
+
+install(FILES ${QM_FILES} DESTINATION ${QT_TRANSLATIONS_DIR})
 
 # Optional: Install a man page
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/yggtray.1 DESTINATION ${INSTALL_MAN_DIR})
