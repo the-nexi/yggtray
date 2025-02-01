@@ -64,8 +64,10 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GH_REPO: ${{ github.repository }}
       run: |
+        # Get the tag message to use as release notes
+        TAG_MSG=$(git tag -l --format='%(contents)' ${{ env.VERSION }})
         gh release create "${{ env.VERSION }}" \
           --title "Yggdrasil Tray v${{ env.VERSION }}" \
-          --notes "Release v${{ env.VERSION }}" \
+          --notes "$TAG_MSG" \
           "build/yggtray-${{ env.VERSION }}.tar.gz"
 
