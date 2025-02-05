@@ -21,9 +21,13 @@
 #include <QSharedMemory>
 #include <QTranslator>
 #include <cstdio>
+#include <iostream>
+
 #include "ServiceManager.h"
 #include "SocketManager.h"
 #include "SetupWizard.h"
+
+using namespace std;
 
 /**
  * @brief Path candidates for the Yggdrasil socket.
@@ -176,6 +180,18 @@ private:
 };
 
 /**
+ * This procedure prints the help message.
+ */
+void printHelp(const char* program) {
+    cout << "Usage: " << program << " [options]" << endl
+         << endl
+         << "Options:" << endl
+         << "    --help, -h        Print this message." << endl
+         << "    --version         Print Yggtray version." << endl
+         << "    --setup           Run the setup wizard." << endl;
+}
+
+/**
  * @brief Main function for the Yggdrasil Tray application.
  */
 int main(int argc, char *argv[]) {
@@ -205,6 +221,11 @@ int main(int argc, char *argv[]) {
     bool forceSetup = false;
     for (int i = 1; i < argc; ++i) {
         QString arg = argv[i];
+
+        if ((arg == "--help") || (arg == "-h")) {
+            printHelp(argv[0]);
+            return 0;
+        }
 
         if (arg == "--version") {
             printf("yggtray version %s\n", YGGTRAY_VERSION);
