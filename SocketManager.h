@@ -43,7 +43,9 @@ public:
             return {};
         }
 
-        QByteArray requestData = QJsonDocument(request).toJson(QJsonDocument::Compact) + "\n";
+        QByteArray requestData =
+            QJsonDocument(request).toJson(QJsonDocument::Compact)
+            + "\n";
         socket.write(requestData);
         if (!socket.waitForBytesWritten(3000)) {
             qDebug() << "Failed to write request to socket";
@@ -67,7 +69,9 @@ public:
 
     /**
      * @brief Retrieves the Yggdrasil IP address from the socket.
-     * @return A QString containing the IP address, or "Unknown" if an error occurred.
+     *
+     * @return A QString containing the IP address, or "Unknown" if an error
+     * occurred.
      */
     QString getYggdrasilIP() {
         QJsonObject response = sendRequest({{"request", "getself"}});
@@ -82,7 +86,8 @@ private:
     QString activeSocketPath; ///< The active socket path.
 
     /**
-     * @brief Determines the first valid socket path from the list of candidates.
+     * @brief Determines the first valid socket path from the list of
+     * candidates.
      */
     void determineSocketPath() {
         for (const QString &path : socketPaths) {
@@ -92,10 +97,12 @@ private:
                 socket.connectToServer(path);
                 if (socket.waitForConnected(500)) {
                     activeSocketPath = path;
-                    qDebug() << "Using active socket path:" << activeSocketPath;
+                    qDebug() << "Using active socket path:"
+                             << activeSocketPath;
                     return;
                 } else {
-                    qDebug() << "Socket path exists but cannot be connected to:" << path;
+                    qDebug() << "Socket path exists but cannot be connected to:"
+                             << path;
                 }
             } else {
                 qDebug() << "Socket path does not exist:" << path;
