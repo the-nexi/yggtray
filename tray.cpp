@@ -1,7 +1,7 @@
 /**
  * @file tray.cpp
  * @brief Main application file for the Yggdrasil Tray application.
- * 
+ *
  * Handles the GUI logic for managing the Yggdrasil service, including
  * displaying the system tray icon, managing menu interactions, and
  * updating the service status and IP address. Integrates a first-time
@@ -86,12 +86,18 @@ public:
 
         // Toggle Yggdrasil service action
         toggleAction = new QAction(tr("Start/Stop Yggdrasil"), trayMenu);
-        connect(toggleAction, &QAction::triggered, this, &YggdrasilTray::toggleYggdrasilService);
+        connect(toggleAction,
+                &QAction::triggered,
+                this,
+                &YggdrasilTray::toggleYggdrasilService);
         trayMenu->addAction(toggleAction);
 
         // Copy IP action
         copyIPAction = new QAction(tr("Copy IP"), trayMenu);
-        connect(copyIPAction, &QAction::triggered, this, &YggdrasilTray::copyIP);
+        connect(copyIPAction,
+                &QAction::triggered,
+                this,
+                &YggdrasilTray::copyIP);
         trayMenu->addAction(copyIPAction);
 
         trayMenu->addSeparator();
@@ -105,7 +111,10 @@ public:
         trayIcon->show();
 
         // Connect activated signal
-        connect(trayIcon, &QSystemTrayIcon::activated, this, &YggdrasilTray::onTrayIconActivated);
+        connect(trayIcon,
+                &QSystemTrayIcon::activated,
+                this,
+                &YggdrasilTray::onTrayIconActivated);
 
         // Periodic update
         QTimer *timer = new QTimer(this);
@@ -163,7 +172,8 @@ private slots:
     }
 
     void onTrayIconActivated(QSystemTrayIcon::ActivationReason reason) {
-        if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::Context) {
+        if ((reason == QSystemTrayIcon::Trigger)
+            || (reason == QSystemTrayIcon::Context)) {
             trayMenu->popup(QCursor::pos());
         }
     }
@@ -204,16 +214,17 @@ int main(int argc, char *argv[]) {
 
     // Check for existing instance
     QSharedMemory sharedMem("YggdrasilTrayInstance");
-    
+
     // Attempt to clean up any stale shared memory segment
     if (sharedMem.attach()) {
         sharedMem.detach();
     }
 
     if (!sharedMem.create(1)) {
-        QMessageBox::warning(nullptr,
-                             "YggdrasilTray",
-                             YggdrasilTray::tr("Another instance is already running."));
+        QMessageBox::warning(
+            nullptr,
+            "YggdrasilTray",
+            YggdrasilTray::tr("Another instance is already running."));
         return 1;
     }
 
@@ -238,9 +249,10 @@ int main(int argc, char *argv[]) {
     }
 
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        QMessageBox::critical(nullptr,
-                              YggdrasilTray::tr("Error"),
-                              YggdrasilTray::tr("System tray is not available on this system."));
+        QMessageBox::critical(
+            nullptr,
+            YggdrasilTray::tr("Error"),
+            YggdrasilTray::tr("System tray is not available on this system."));
         return 1;
     }
 
