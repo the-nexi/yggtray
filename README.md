@@ -26,7 +26,7 @@ To install the latest Yggtray version through [GNU Guix](https://guix.gnu.org/) 
 guix install yggtray
 ```
 
-### Manual
+### Manual installation
 
 ```
 ./make.sh
