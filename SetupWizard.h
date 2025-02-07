@@ -40,24 +40,31 @@ public:
             QMessageBox::information(
                 nullptr, 
                 QObject::tr("Group Membership"),
-                QObject::tr("You are not in the 'yggdrasil' group. To use this application, you must be added to this group.")
+                QObject::tr("You are not in the 'yggdrasil' group. "
+                          "To use this application, you must be added to this group.")
             );
 
-            QString choice = promptAction(QObject::tr("Would you like to add yourself to the 'yggdrasil' group now?"),
-                                          {QObject::tr("Add Me"), QObject::tr("Skip")});
+            QString choice = promptAction(
+                QObject::tr("Would you like to add yourself to the 'yggdrasil' group now?"),
+                {QObject::tr("Add Me"), QObject::tr("Skip")}
+            );
             if (choice == QObject::tr("Add Me")) {
                 addUserToGroup("yggdrasil");
             } else {
                 QMessageBox::warning(
                     nullptr, 
                     QObject::tr("Setup Incomplete"),
-                    QObject::tr("You need to be in the 'yggdrasil' group to use the application. Exiting setup.")
+                    QObject::tr("You need to be in the 'yggdrasil' group "
+                              "to use the application. Exiting setup.")
                 );
                 return;
             }
         }
 
-        QString choice = promptAction(QObject::tr("Would you like to configure ip6tables for Yggdrasil?"), {QObject::tr("Configure"), QObject::tr("Skip")});
+        QString choice = promptAction(
+            QObject::tr("Would you like to configure ip6tables for Yggdrasil?"),
+            {QObject::tr("Configure"), QObject::tr("Skip")}
+        );
         if (choice == QObject::tr("Configure")) {
             configureIptables();
         }
@@ -149,11 +156,21 @@ private:
         process.waitForFinished();
 
         if (process.exitCode() == 0) {
-            QMessageBox::information(nullptr, QObject::tr("Group Addition"), 
-                                     QString(QObject::tr("You have been added to the '%1' group. Please log out and log back in for the changes to take effect.")).arg(groupName));
+            QMessageBox::information(
+                nullptr,
+                QObject::tr("Group Addition"),
+                QString(QObject::tr("You have been added to the '%1' group. "
+                                  "Please log out and log back in for the changes to take effect."))
+                    .arg(groupName)
+            );
         } else {
-            QMessageBox::critical(nullptr, QObject::tr("Group Addition"), 
-                                  QString(QObject::tr("Failed to add you to the '%1' group. Ensure you have the necessary permissions.")).arg(groupName));
+            QMessageBox::critical(
+                nullptr,
+                QObject::tr("Group Addition"),
+                QString(QObject::tr("Failed to add you to the '%1' group. "
+                                  "Ensure you have the necessary permissions."))
+                    .arg(groupName)
+            );
         }
     }
 
@@ -174,14 +191,21 @@ R"(#yggdrasil
 COMMIT)";
 
         if (QFile::exists(rulesFilePath)) {
-            QString choice = promptAction(QObject::tr("The ip6tables configuration file already exists. What would you like to do?"),
-                                          {QObject::tr("Overwrite"), QObject::tr("Append"), QObject::tr("Cancel")});
+            QString choice = promptAction(
+                QObject::tr("The ip6tables configuration file already exists. "
+                          "What would you like to do?"),
+                {QObject::tr("Overwrite"), QObject::tr("Append"), QObject::tr("Cancel")}
+            );
             if (choice == QObject::tr("Overwrite")) {
                 writeToFile(rulesFilePath, iptablesRules, false);
             } else if (choice == QObject::tr("Append")) {
                 writeToFile(rulesFilePath, iptablesRules, true);
             } else {
-                QMessageBox::information(nullptr, "ip6tables", QObject::tr("No changes were made to the ip6tables configuration."));
+                QMessageBox::information(
+                    nullptr,
+                    "ip6tables",
+                    QObject::tr("No changes were made to the ip6tables configuration.")
+                );
                 return;
             }
         } else {
@@ -234,9 +258,19 @@ COMMIT)";
     void enableIp6tablesService() {
         ServiceManager serviceManager("ip6tables");
         if (serviceManager.enableService()) {
-            QMessageBox::information(nullptr, QObject::tr("ip6tables Service"), QObject::tr("The ip6tables service has been enabled and started successfully."));
+            QMessageBox::information(
+                nullptr,
+                QObject::tr("ip6tables Service"),
+                QObject::tr("The ip6tables service has been enabled "
+                          "and started successfully.")
+            );
         } else {
-            QMessageBox::critical(nullptr, QObject::tr("ip6tables Service"), QObject::tr("Failed to enable and start the ip6tables service. Ensure it is properly installed."));
+            QMessageBox::critical(
+                nullptr,
+                QObject::tr("ip6tables Service"),
+                QObject::tr("Failed to enable and start the ip6tables service. "
+                          "Ensure it is properly installed.")
+            );
         }
     }
 };
