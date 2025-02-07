@@ -15,7 +15,7 @@ This wiard can be launched by running `yggtray --setup` command.
 
 ## Installation
 
-### Appimage building
+### Appimage
 
 It's generally recomended to use appimage packages, they're avalable in [releases](https://github.com/the-nexi/yggtray/releases) section.
 
@@ -51,7 +51,7 @@ make -j$(nproc)
 cd .. 
 ```
 
-## AppImage
+## AppImage building
 
 To build a portable AppImage:
 ```
