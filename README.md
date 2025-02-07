@@ -15,6 +15,10 @@ This wiard can be launched by running `yggtray --setup` command.
 
 ## Installation
 
+### Appimage
+
+It's generally recomended to use appimage packages, they're avalable in [releases]([url](https://github.com/the-nexi/yggtray/releases)) section.
+
 ### GNU Guix
 
 To install the latest Yggtray version through [GNU Guix](https://guix.gnu.org/) package manager, run the following command:
