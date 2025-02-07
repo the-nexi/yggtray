@@ -194,7 +194,7 @@ COMMIT)";
             QString choice = promptAction(
                 QObject::tr("The ip6tables configuration file already exists. "
                           "What would you like to do?"),
-                {QObject::tr("Overwrite"), QObject::tr("Append"), QObject::tr("Cancel")}
+                {QObject::tr("Overwrite"), QObject::tr("Append"), QObject::tr("Don't change the configuration file")}
             );
             if (choice == QObject::tr("Overwrite")) {
                 writeToFile(rulesFilePath, iptablesRules, false);

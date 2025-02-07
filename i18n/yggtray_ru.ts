@@ -131,8 +131,8 @@
       <translation>Добавить</translation>
     </message>
     <message>
-      <source>Cancel</source>
-      <translation>Отменить</translation>
+      <source>Don't change the configuration file</source>
+      <translation>Не изменять файл конфигурации</translation>
     </message>
     <message>
       <source>No changes were made to the ip6tables configuration.</source>
