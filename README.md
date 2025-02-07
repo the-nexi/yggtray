@@ -17,7 +17,7 @@ This wiard can be launched by running `yggtray --setup` command.
 
 ### Appimage
 
-It's generally recomended to use appimage packages, they're avalable in [releases]([url](https://github.com/the-nexi/yggtray/releases)) section.
+It's generally recomended to use appimage packages, they're avalable in [releases](https://github.com/the-nexi/yggtray/releases) section.
 
 ### GNU Guix
 
