@@ -29,37 +29,45 @@ jobs:
 
     # Step 3: Install dependencies
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y cmake build-essential qtbase5-dev qt5-qmake qttools5-dev
-
-    # Step 4: Configure CMake
-    - name: Configure CMake
       run: |
-        rm -rf build
-        mkdir build
-        cd build
+        sudo apt-get update && sudo apt-get install -y \
+        cmake \
+        build-essential \
+        qtbase5-dev \
+        qt5-qmake \
+        qttools5-dev \
+        wget
+
+    # Step 4: Build regular package
+    - name: Build Regular Package
+      run: |
+        rm -rf build_regular
+        mkdir build_regular
+        cd build_regular
         cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-
-    # Step 5: Build the project
-    - name: Build
-      run: |
-        cd build
         make VERBOSE=1
-
-    # Step 6: Package the artifact
-    - name: Package artifact
-      run: |
-        cd build
         tar -czvf yggtray-${{ env.VERSION }}.tar.gz yggtray
 
-    # Step 7: Upload the artifact
-    - name: Upload release artifact
+    # Step 5: Build AppImage
+    - name: Build AppImage
+      run: |
+        rm -rf build_appimage
+        mkdir build_appimage
+        cd build_appimage
+        cmake ..
+        make appimage
+
+    # Step 6: Upload artifacts
+    - name: Upload release artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: yggtray
-        path: build/yggtray-${{ env.VERSION }}.tar.gz
+        name: yggtray-packages
+        path: |
+          build_regular/yggtray-${{ env.VERSION }}.tar.gz
+          build_appimage/YggdrasilTray-${{ env.VERSION }}-x86_64.AppImage
 
-    # Step 8: Create Release and Upload Asset
-    - name: Create Release and Upload Asset
+    # Step 7: Create Release and Upload Assets
+    - name: Create Release and Upload Assets
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GH_REPO: ${{ github.repository }}
@@ -69,5 +77,6 @@ jobs:
         gh release create "${{ env.VERSION }}" \
           --title "Yggdrasil Tray v${{ env.VERSION }}" \
           --notes "$TAG_MSG" \
-          "build/yggtray-${{ env.VERSION }}.tar.gz"
+          "build_regular/yggtray-${{ env.VERSION }}.tar.gz" \
+          "build_appimage/YggdrasilTray-${{ env.VERSION }}-x86_64.AppImage"
 
