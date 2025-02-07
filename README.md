@@ -15,6 +15,15 @@ This wiard can be launched by running `yggtray --setup` command.
 
 ## Installation
 
+### GNU Guix
+
+To install the latest Yggtray version through [GNU Guix](https://guix.gnu.org/) package manager, run the following command:
+```
+guix install yggtray
+```
+
+### Manual
+
 ```
 ./make.sh
 cd build/
