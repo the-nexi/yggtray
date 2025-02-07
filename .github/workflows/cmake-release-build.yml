@@ -36,7 +36,13 @@ jobs:
         qtbase5-dev \
         qt5-qmake \
         qttools5-dev \
-        wget
+        wget \
+        fuse \
+        libfuse2
+        # Configure FUSE for use in container
+        sudo modprobe fuse
+        sudo chmod 666 /dev/fuse
+        sudo chown root:$USER /dev/fuse
 
     # Step 4: Build regular package
     - name: Build Regular Package
