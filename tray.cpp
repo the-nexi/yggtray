@@ -26,6 +26,7 @@
 #include "ServiceManager.h"
 #include "SocketManager.h"
 #include "SetupWizard.h"
+#include "PeerDiscoveryDialog.h"
 
 using namespace std;
 
@@ -99,6 +100,11 @@ public:
                 this,
                 &YggdrasilTray::copyIP);
         trayMenu->addAction(copyIPAction);
+
+        // Manage peers action
+        managePeersAction = new QAction(tr("Manage Peers"), trayMenu);
+        connect(managePeersAction, &QAction::triggered, this, &YggdrasilTray::showPeerManager);
+        trayMenu->addAction(managePeersAction);
 
         trayMenu->addSeparator();
 
@@ -185,8 +191,21 @@ private:
     QAction *ipAction;
     QAction *toggleAction;
     QAction *copyIPAction;
+    QAction *managePeersAction;
     ServiceManager serviceManager;
     SocketManager socketManager;
+
+private slots:
+    void showPeerManager() {
+        PeerDiscoveryDialog dialog(nullptr);
+        if (dialog.exec() == QDialog::Accepted) {
+            // Restart the service to apply the new configuration
+            if (serviceManager.isServiceRunning()) {
+                serviceManager.stopService();
+                serviceManager.startService();
+            }
+        }
+    }
 };
 
 /**
@@ -267,4 +286,3 @@ int main(int argc, char *argv[]) {
 }
 
 #include "tray.moc"
-

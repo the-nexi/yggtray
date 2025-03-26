@@ -51,7 +51,13 @@ set_source_files_properties("${RESOURCES_FILE}" PROPERTIES GENERATED TRUE)
 qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 
 # Add executable
-add_executable(yggtray tray.cpp ${RESOURCES} ${QM_FILES})
+add_executable(yggtray 
+    tray.cpp 
+    PeerManager.h
+    PeerDiscoveryDialog.h
+    ${RESOURCES} 
+    ${QM_FILES}
+)
 target_link_libraries(yggtray Qt5::Widgets Qt5::Network)
 
 # Copy icon file to build directory
@@ -148,4 +154,3 @@ if (DOXYGEN_FOUND)
 else ()
     message(WARNING "Doxygen not found. Documentation won't be generated.")
 endif ()
-
