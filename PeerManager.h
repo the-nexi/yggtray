@@ -274,6 +274,11 @@ public:
     bool updateConfig(const QList<PeerData>& selectedPeers) {
         qDebug() << "Attempting to update config with" << selectedPeers.count() << "peers";
         
+        // Count valid peers for logging
+        int totalValidPeers = std::count_if(selectedPeers.begin(), selectedPeers.end(), 
+                                           [](const PeerData& p) { return p.isValid; });
+        qDebug() << "Total valid peers in selection:" << totalValidPeers;
+        
         // Sort peers by latency (lowest first)
         QList<PeerData> sortedPeers = selectedPeers;
         std::sort(sortedPeers.begin(), sortedPeers.end(), 

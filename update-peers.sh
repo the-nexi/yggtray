@@ -45,6 +45,9 @@ cp "$CONFIG_FILE" "$BACKUP_FILE"
 {
     echo "Peers: ["
     # Process each line, trim whitespace, ensure proper format
+    COUNT=0
+    MAX_PEERS=15  # Limit to 15 peers as mentioned in the comments
+    
     while IFS= read -r line || [ -n "$line" ]; do
         # Skip empty lines
         [ -z "$line" ] && continue
@@ -55,8 +58,22 @@ cp "$CONFIG_FILE" "$BACKUP_FILE"
         # Skip if empty after trimming
         [ -z "$line" ] && continue
         
-        # Output the peer on its own line without commas or extra indentation
-        echo "$line"
+        # Enforce proper URI format - must be tls://, tcp:// or quic:// followed by host and port
+        if ! echo "$line" | grep -qE '^(tls|tcp|quic)://[^[:space:]]+:[0-9]+$'; then
+            [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Skipping invalid peer URI format: $line" >&2
+            continue
+        fi
+        
+        # Count the peers we're adding (up to MAX_PEERS)
+        COUNT=$((COUNT + 1))
+        if [ "$COUNT" -le "$MAX_PEERS" ]; then
+            # Output each peer on its own line without commas or indentation
+            echo "$line"
+            [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Added peer $COUNT: $line" >&2
+        else
+            [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Reached max peers limit ($MAX_PEERS), skipping: $line" >&2
+            break
+        fi
     done < "$PEERS_FILE"
     echo "]"
 } > "$TEMP_FILE.peers"
