@@ -11,6 +11,8 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QCloseEvent>
+#include <QDebug>
+#include <QTimer>
 #include "PeerManager.h"
 
 /**
@@ -21,9 +23,9 @@ class PeerDiscoveryDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit PeerDiscoveryDialog(QWidget *parent = nullptr)
+    explicit PeerDiscoveryDialog(bool debugMode = false, QWidget *parent = nullptr)
         : QDialog(parent)
-        , peerManager(new PeerManager(this))
+        , peerManager(new PeerManager(debugMode, this))
         , testedPeers(0)
         , totalPeers(0)
         , isTesting(false) {
@@ -79,29 +81,30 @@ private slots:
         testedPeers++;
         progressBar->setValue((testedPeers * 100) / totalPeers);
 
-        // Find and update the peer in the table
-        for (int i = 0; i < peerTable->rowCount(); ++i) {
-            if (peerTable->item(i, 0)->text() == peer.host) {
-                peerTable->setItem(i, 1, new QTableWidgetItem(
-                    peer.latency < 0 ? tr("Failed") : QString::number(peer.latency) + "ms"
-                ));
-                peerTable->setItem(i, 2, new QTableWidgetItem(
-                    peer.speed < 0 ? tr("Failed") : QString::number(peer.speed, 'f', 2) + " Mbps"
-                ));
-                peerTable->setItem(i, 3, new QTableWidgetItem(
-                    peer.isValid ? tr("Valid") : tr("Invalid")
-                ));
-
-                // Color code based on status - using better contrast
-                for (int col = 0; col < peerTable->columnCount(); ++col) {
-                    QTableWidgetItem* item = peerTable->item(i, col);
-                    if (peer.isValid) {
-                        // Use a lighter green background with black text for better readability
-                        item->setBackground(QColor(220, 255, 220));
-                        item->setForeground(QColor(0, 0, 0));
-                    } else {
-                        // Use a lighter red background with black text
-                        item->setBackground(QColor(255, 220, 220));
+        // Find the peer in the peerList and update it
+        for (int i = 0; i < peerList.size(); ++i) {
+            if (peerList[i].host == peer.host) {
+                // Update the peer in our list with the tested results
+                peerList[i].latency = peer.latency;
+                peerList[i].isValid = peer.isValid;
+                qDebug() << "Updated peer in peerList:" << peer.host 
+                         << "isValid:" << peer.isValid 
+                         << "latency:" << peer.latency;
+                
+                // Update the UI representation
+                if (i < peerTable->rowCount()) {
+                    peerTable->setItem(i, 1, new QTableWidgetItem(
+                        peer.latency < 0 ? tr("Failed") : QString::number(peer.latency) + "ms"
+                    ));
+                    peerTable->setItem(i, 2, new QTableWidgetItem("-")); // Remove speed display
+                    peerTable->setItem(i, 3, new QTableWidgetItem(
+                        peer.isValid ? tr("Valid") : tr("Invalid")
+                    ));
+                    
+                    // Color code based on status
+                    for (int col = 0; col < peerTable->columnCount(); ++col) {
+                        QTableWidgetItem* item = peerTable->item(i, col);
+                        item->setBackground(peer.isValid ? QColor(220, 255, 220) : QColor(255, 220, 220));
                         item->setForeground(QColor(0, 0, 0));
                     }
                 }
@@ -112,10 +115,19 @@ private slots:
         statusLabel->setText(tr("Testing peers: %1/%2").arg(testedPeers).arg(totalPeers));
         
         if (testedPeers == totalPeers) {
+            // Debug: Print the state of the peerList after all tests completed
+            qDebug() << "\nCurrent peerList state:";
+            for (int i = 0; i < peerList.size() && i < 50; ++i) { // Limit to 50 to avoid flooding log
+                qDebug() << "Peer in list:" << peerList[i].host 
+                         << "isValid:" << peerList[i].isValid 
+                         << "latency:" << peerList[i].latency;
+            }
+            
             statusLabel->setText(tr("Testing complete"));
             applyButton->setEnabled(true);
             testButton->setText(tr("Test"));
             testButton->setEnabled(true);
+            refreshButton->setEnabled(true); // Re-enable refresh button when testing completes
             isTesting = false;
         }
     }
@@ -143,67 +155,90 @@ private slots:
         totalPeers = peerList.count();
         progressBar->setValue(0);
         applyButton->setEnabled(false);
+        // Disable the refresh button during testing
+        refreshButton->setEnabled(false);
         statusLabel->setText(tr("Testing peers: 0/%1").arg(totalPeers));
         
         // Change button text to 'Stop'
         testButton->setText(tr("Stop"));
         isTesting = true;
         
-        // Now we just need to start the tests in a non-blocking way
-        // The PeerManager will handle the threading
-        for (const auto& peer : peerList) {
-            peerManager->testPeer(peer);
+        // Reset any previous cancellation before starting new tests
+        peerManager->resetCancellation();
+        
+        // Schedule peer tests to be started one by one using a timer
+        // rather than queuing them all at once
+        startNextPeerTest(0);
+    }
+    
+    void startNextPeerTest(int index) {
+        if (!isTesting || index >= peerList.size()) {
+            return;
+        }
+        
+        // Test the current peer
+        peerManager->testPeer(peerList[index]);
+        
+        // Schedule the next peer test after a short delay
+        if (index + 1 < peerList.size()) {
+            QTimer::singleShot(100, this, [this, index]() {
+                startNextPeerTest(index + 1);
+            });
         }
     }
 
     void onApplyClicked() {
         QList<PeerData> selectedPeers;
-        QSet<int> selectedRows;
         auto selectionModel = peerTable->selectionModel();
         
-        if (selectionModel->hasSelection()) {
-            auto selectedRanges = selectionModel->selectedRows();
-            for (const auto& range : selectedRanges) {
-                selectedRows.insert(range.row());
-            }
+        // Print the current state of peerList
+        qDebug() << "\nCurrent peerList state:";
+        for (const auto& peer : peerList) {
+            qDebug() << "Peer in list:" << peer.host << "isValid:" << peer.isValid << "latency:" << peer.latency;
         }
-
-        // If no specific selection, use all valid peers
-        if (selectedRows.isEmpty()) {
-            for (int i = 0; i < peerList.size(); i++) {
-                if (peerList[i].isValid) {
-                    selectedPeers.append(peerList[i]);
+        
+        if (selectionModel->hasSelection()) {
+            // Get selected rows
+            auto selectedRanges = selectionModel->selectedRows();
+            qDebug() << "\nSelected rows:" << selectedRanges.count();
+            for (const auto& range : selectedRanges) {
+                if (range.row() < peerList.size()) {
+                    const PeerData& peer = peerList[range.row()];
+                    selectedPeers.append(peer);
+                    qDebug() << "Added selected peer:" << peer.host 
+                             << "isValid:" << peer.isValid 
+                             << "latency:" << peer.latency
+                             << "row:" << range.row();
                 }
             }
         } else {
-            for (int row : selectedRows) {
-                if (row < peerList.size()) {
-                    selectedPeers.append(peerList[row]);
-                }
+            // If no selection, use all rows
+            qDebug() << "\nNo selection, using all" << peerList.size() << "peers";
+            selectedPeers = peerList;
+            for (const auto& peer : selectedPeers) {
+                qDebug() << "Using peer:" << peer.host 
+                         << "isValid:" << peer.isValid 
+                         << "latency:" << peer.latency;
             }
         }
 
-        // Make sure we have at least one valid peer
-        bool hasValidPeer = false;
-        for (const auto& peer : selectedPeers) {
-            if (peer.isValid) {
-                hasValidPeer = true;
-                break;
-            }
-        }
-
-        if (!hasValidPeer) {
+        if (selectedPeers.isEmpty()) {
+            qDebug() << "No peers selected, aborting";
             QMessageBox::warning(this, tr("Warning"),
-                               tr("No valid peers selected"));
+                               tr("No peers selected"));
             return;
         }
 
-        if (peerManager->updateConfig(selectedPeers)) {
-            QMessageBox::information(this, tr("Success"),
-                                   tr("Configuration updated with %1 peers")
-                                   .arg(selectedPeers.count()));
+        qDebug() << "Total peers to apply:" << selectedPeers.count() 
+                 << "Valid peers:" << std::count_if(selectedPeers.begin(), selectedPeers.end(), 
+                       [](const PeerData& p) { return p.isValid; });
+                    if (peerManager->updateConfig(selectedPeers)) {
+                        qDebug() << "Configuration updated successfully";
+                        QMessageBox::information(this, tr("Success"),
+                                   tr("Configuration updated successfully"));
             accept();
         } else {
+            qDebug() << "Configuration update failed";
             QMessageBox::critical(this, tr("Error"),
                                 tr("Failed to update configuration"));
         }
@@ -232,8 +267,8 @@ private:
         peerTable->setHorizontalHeaderLabels({
             tr("Host"),
             tr("Latency"),
-            tr("Speed"),
-            tr("Status")
+            tr("Status"),
+            tr("Valid")
         });
         peerTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
         peerTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -281,6 +316,9 @@ private:
         // Reset the UI
         testButton->setText(tr("Test"));
         isTesting = false;
+        
+        // Re-enable refresh button
+        refreshButton->setEnabled(true);
         
         // If we've tested at least some peers, enable the Apply button
         if (testedPeers > 0) {

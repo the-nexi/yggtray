@@ -7,6 +7,9 @@
 #include <QProcess>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QTemporaryFile>
+#include <QTemporaryDir>
+#include <QCoreApplication>
 #include <QRegularExpression>
 #include <QTcpSocket>
 #include <QTextStream>
@@ -15,6 +18,7 @@
 #include <QQueue>
 #include <QMetaType>
 #include <QAtomicInt>
+#include <QDebug>
 
 /**
  * @struct PeerData
@@ -23,7 +27,6 @@
 struct PeerData {
     QString host;
     int latency = -1;      // in milliseconds
-    double speed = -1.0;   // in Mbps
     bool isValid = false;
 };
 
@@ -44,128 +47,100 @@ public:
 
 public slots:
     void testPeer(PeerData peer) {
-        // Check if cancellation was requested before starting the test
         if (cancelRequested.loadAcquire()) {
+            qDebug() << "Skipping test for" << peer.host << "due to cancellation";
             return;
         }
 
-        // Test latency using ping
-        QProcess pingProcess;
+        qDebug() << "Testing peer:" << peer.host;
+
+        // Create process on heap instead of stack
+        QProcess* pingProcess = new QProcess(this);
         QStringList args;
-        args << "-c" << "3" << peer.host.split("://").last().split(":").first();
+        QString hostToPing = peer.host.split("://").last().split(":").first();
+        args << "-c" << "3" << hostToPing;
         
-        pingProcess.start("ping", args);
+        // Add to active processes list with heap-allocated process
+        {
+            QMutexLocker locker(&processesMutex);
+            activeProcesses.append(pingProcess);
+        }
         
-        // Wait for process to finish but check for cancellation periodically
+        // Connect to the process to handle its lifecycle within this thread
+        connect(pingProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+                [this, pingProcess]() {
+                    QMutexLocker locker(&processesMutex);
+                    activeProcesses.removeAll(pingProcess);
+                    pingProcess->deleteLater();
+                });
+        
+        qDebug() << "Running ping for:" << hostToPing << "with args:" << args;
+        pingProcess->start("ping", args);
+        
         const int checkIntervalMs = 100;
         int timeoutRemaining = 5000;
         
-        while (!pingProcess.waitForFinished(checkIntervalMs)) {
-            // Check if cancellation was requested
+        while (!pingProcess->waitForFinished(checkIntervalMs)) {
             if (cancelRequested.loadAcquire()) {
-                pingProcess.kill();
+                qDebug() << "Ping cancelled for:" << peer.host;
+                // Let the process finish on its own through the connected signal
+                pingProcess->terminate(); // Use terminate instead of kill
+                // Don't wait here - let the finished signal handle cleanup
                 return;
             }
             
             timeoutRemaining -= checkIntervalMs;
             if (timeoutRemaining <= 0) {
-                // Timeout occurred
-                pingProcess.kill();
+                qDebug() << "Ping timeout for:" << peer.host;
+                pingProcess->terminate();
                 break;
             }
         }
         
-        if (pingProcess.state() == QProcess::NotRunning && !cancelRequested.loadAcquire()) {
-            QString output = pingProcess.readAllStandardOutput();
-            // Parse average latency from ping output
-            QRegularExpression rx("min/avg/max/mdev = \\d+\\.\\d+/([\\d.]+)/\\d+\\.\\d+/\\d+\\.\\d+");
-            auto match = rx.match(output);
-            if (match.hasMatch()) {
-                peer.latency = match.captured(1).toDouble();
-                peer.isValid = true;
-            }
+        if (cancelRequested.loadAcquire()) {
+            qDebug() << "Test cancelled after ping completed for:" << peer.host;
+            return;
+        }
+        
+        // Process results only if not cancelled
+        QString output = pingProcess->readAllStandardOutput();
+        QRegularExpression rx("min/avg/max/mdev = \\d+\\.\\d+/([\\d.]+)/\\d+\\.\\d+/\\d+\\.\\d+");
+        auto match = rx.match(output);
+        qDebug() << "Ping output for" << peer.host << ":" << output;
+        if (match.hasMatch()) {
+            peer.latency = match.captured(1).toDouble();
+            peer.isValid = true;
+            qDebug() << "Latency for" << peer.host << ":" << peer.latency << "ms";
+        } else {
+            qDebug() << "No latency match for:" << peer.host;
         }
 
-        // Test connection speed using a simple data transfer
-        if (peer.isValid && !cancelRequested.loadAcquire()) {
-            testConnectionSpeed(peer);
-        }
-
-        // If cancellation wasn't requested, emit completion signal
         if (!cancelRequested.loadAcquire()) {
+            qDebug() << "Emitting peerTested signal for:" << peer.host << "isValid:" << peer.isValid;
             emit peerTested(peer);
         }
     }
     
     void requestCancel() {
         cancelRequested.storeRelease(1);
+        
+        // Instead of directly killing processes, just mark them for termination
+        // Each process will check this flag and terminate itself in its own thread
+        qDebug() << "=== CANCELLATION REQUESTED: Marking" << activeProcesses.size() << "active ping processes for termination ===";
+    }
+    
+    void resetCancellation() {
+        cancelRequested.storeRelease(0);
+        qDebug() << "=== CANCELLATION FLAG RESET ===";
     }
 
 signals:
     void peerTested(const PeerData& peer);
 
 private:
-    void testConnectionSpeed(PeerData& peer) {
-        // Implement a simple speed test by measuring data transfer time
-        QTcpSocket socket;
-        socket.connectToHost(peer.host.split("://").last().split(":").first(),
-                           peer.host.split(":").last().toInt());
-        
-        // Wait for connection but check for cancellation periodically
-        const int checkIntervalMs = 100;
-        int timeoutRemaining = 5000;
-        
-        while (!socket.waitForConnected(checkIntervalMs)) {
-            // Check if cancellation was requested
-            if (cancelRequested.loadAcquire()) {
-                socket.abort();
-                return;
-            }
-            
-            timeoutRemaining -= checkIntervalMs;
-            if (timeoutRemaining <= 0 || socket.error() != QAbstractSocket::SocketTimeoutError) {
-                // Timeout or error occurred
-                socket.abort();
-                return;
-            }
-        }
-        
-        if (socket.state() == QAbstractSocket::ConnectedState && !cancelRequested.loadAcquire()) {
-            QElapsedTimer timer;
-            timer.start();
-            
-            // Send test data and measure transfer time
-            QByteArray testData(1024 * 100, 'x'); // 100KB test data
-            socket.write(testData);
-            
-            // Wait for bytes written but check for cancellation periodically
-            timeoutRemaining = 5000;
-            while (!socket.waitForBytesWritten(checkIntervalMs)) {
-                // Check if cancellation was requested
-                if (cancelRequested.loadAcquire()) {
-                    socket.abort();
-                    return;
-                }
-                
-                timeoutRemaining -= checkIntervalMs;
-                if (timeoutRemaining <= 0) {
-                    // Timeout occurred
-                    socket.abort();
-                    return;
-                }
-            }
-            
-            int elapsed = timer.elapsed();
-            if (elapsed > 0) {
-                // Calculate speed in Mbps
-                peer.speed = (testData.size() * 8.0 / 1000000.0) / (elapsed / 1000.0);
-            }
-            
-            socket.disconnectFromHost();
-        }
-    }
-    
     QAtomicInt cancelRequested;
+    QList<QProcess*> activeProcesses;
+    QMutex processesMutex;
 };
 
 /**
@@ -176,10 +151,10 @@ class PeerManager : public QObject {
     Q_OBJECT
 
 public:
-    explicit PeerManager(QObject *parent = nullptr) 
+    explicit PeerManager(bool debugMode = false, QObject *parent = nullptr) 
         : QObject(parent)
         , networkManager(new QNetworkAccessManager(this))
-        , configPath("/etc/yggdrasil.conf") {
+        , debugMode(debugMode) {
         
         // Register PeerData type for queued connections between threads
         qRegisterMetaType<PeerData>("PeerData");
@@ -195,9 +170,11 @@ public:
         
         // Connect signals and slots for thread communication
         connect(this, &PeerManager::requestTestPeer, 
-                peerTester, &PeerTester::testPeer);
+                peerTester, &PeerTester::testPeer, 
+                Qt::QueuedConnection);
         connect(peerTester, &PeerTester::peerTested,
-                this, &PeerManager::handlePeerTested);
+                this, &PeerManager::handlePeerTested,
+                Qt::QueuedConnection);
         connect(workerThread, &QThread::finished, 
                 peerTester, &QObject::deleteLater);
                 
@@ -239,11 +216,26 @@ public:
     }
     
     /**
+     * @brief Resets the cancellation flag to allow new tests to run
+     */
+    void resetCancellation() {
+        if (peerTester) {
+            qDebug() << "=== PeerManager: Resetting cancellation flag ===";
+            QMetaObject::invokeMethod(peerTester, "resetCancellation", Qt::QueuedConnection);
+        }
+    }
+    
+    /**
      * @brief Cancels all ongoing peer tests
      */
     void cancelTests() {
         if (peerTester) {
-            QMetaObject::invokeMethod(peerTester, "requestCancel", Qt::QueuedConnection);
+            qDebug() << "=== PeerManager: Requesting cancellation of all tests ===";
+            // Use a direct connection to ensure immediate execution
+            QMetaObject::invokeMethod(peerTester, "requestCancel", Qt::DirectConnection);
+            qDebug() << "=== PeerManager: Cancellation request sent ===";
+        } else {
+            qDebug() << "=== PeerManager: No peerTester available to cancel tests ===";
         }
     }
 
@@ -252,58 +244,165 @@ public:
      * @param selectedPeers List of peers to include in config
      * @return true if config was updated successfully
      */
-    bool updateConfig(const QList<PeerData>& selectedPeers) {
-        QFile file(configPath);
-        if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+    bool extractResource(const QString& resourcePath, const QString& outputPath) {
+        QFile resourceFile(resourcePath);
+        if (!resourceFile.open(QIODevice::ReadOnly)) {
+            qDebug() << "Failed to open resource:" << resourcePath;
             return false;
         }
 
-        QString config = file.readAll();
-        
-        // Find the Peers section in the config
-        QRegularExpression peersRe("(\\s*Peers:\\s*\\[)[^\\]]*\\]");
-        QString newPeersList = "[\n";
+        QFile outputFile(outputPath);
+        if (!outputFile.open(QIODevice::WriteOnly)) {
+            qDebug() << "Failed to create file:" << outputPath;
+            return false;
+        }
+
+        outputFile.write(resourceFile.readAll());
+        outputFile.close();
+
+        // Make executable if it's the script
+        if (resourcePath.endsWith(".sh")) {
+            QFile::setPermissions(outputPath, 
+                QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner |
+                QFile::ReadGroup | QFile::ExeGroup |
+                QFile::ReadOther | QFile::ExeOther);
+        }
+
+        return true;
+    }
+
+    bool updateConfig(const QList<PeerData>& selectedPeers) {
+        qDebug() << "Attempting to update config with" << selectedPeers.count() << "peers";
         
         // Sort peers by latency (lowest first)
         QList<PeerData> sortedPeers = selectedPeers;
         std::sort(sortedPeers.begin(), sortedPeers.end(), 
             [](const PeerData& a, const PeerData& b) {
-                // If both are valid, compare by latency
                 if (a.isValid && b.isValid) {
                     return a.latency < b.latency;
                 }
-                // Valid peers come before invalid ones
                 return a.isValid > b.isValid;
             });
         
+        // Extract update script to /tmp
+        QString scriptPath = "/tmp/yggtray-update-peers.sh";
+        QString policyPath = "/tmp/org.yggtray.updatepeers.policy";
+        
+        if (!extractResource(":/scripts/update-peers.sh", scriptPath)) {
+            qDebug() << "Failed to extract update script";
+            return false;
+        }
+        
+        if (!extractResource(":/polkit/org.yggtray.updatepeers.policy", policyPath)) {
+            // Clean up script if policy extraction fails
+            QFile::remove(scriptPath);
+            qDebug() << "Failed to extract policy file";
+            return false;
+        }
+        
+        // Create temporary file with peer list
+        QTemporaryFile peersFile;
+        if (!peersFile.open()) {
+            qDebug() << "Failed to create temporary file:" << peersFile.errorString();
+            return false;
+        }
+        
+        // Write peers to temporary file
+        QTextStream stream(&peersFile);
+        int validPeerCount = 0;
+        
+        // First try to write only valid peers
         for (const auto& peer : sortedPeers) {
             if (peer.isValid) {
-                // Format without quotes as per example
-                newPeersList += QString("    %1\n").arg(peer.host);
+                stream << peer.host << "\n";
+                validPeerCount++;
             }
         }
         
-        // Close the bracket
-        newPeersList += "  ]";
-        
-        QString newConfig;
-        if (peersRe.match(config).hasMatch()) {
-            // Replace existing Peers section
-            newConfig = config.replace(peersRe, "\\1" + newPeersList);
+        // If no valid peers, use all peers as a fallback
+        if (validPeerCount == 0) {
+            qDebug() << "WARNING: No valid peers found. Using all peers as fallback.";
+            stream.seek(0); // Reset the stream position
+            
+            // Use all peers instead, sorted by latency if available
+            for (const auto& peer : sortedPeers) {
+                stream << peer.host << "\n";
+            }
+            
+            qDebug() << "Writing all" << sortedPeers.count() << "peers to config file (script will use up to 15)";
         } else {
-            // Add new Peers section
-            newConfig = config.trimmed();
-            if (!newConfig.isEmpty() && !newConfig.endsWith("\n")) {
-                newConfig += "\n";
-            }
-            newConfig += "  Peers: " + newPeersList + "\n";
+            qDebug() << "Writing" << validPeerCount << "valid peers to config file (script will use up to 15)";
         }
         
-        // Write updated config
-        file.seek(0);
-        file.write(newConfig.toUtf8());
-        file.resize(file.pos());
+        stream.flush();
         
+        // Debug: Read back file content to verify it's not empty
+        peersFile.seek(0);
+        QString fileContent = QString::fromUtf8(peersFile.readAll());
+        qDebug() << "Peers file content:" << (fileContent.isEmpty() ? "EMPTY!" : "Contains data");
+        peersFile.seek(0);  // Reset position for the script to read
+        
+        // Execute update script with elevated privileges
+        QProcess process;
+        QStringList args;
+        if (debugMode) {
+            args << "sh" << scriptPath << "--verbose" << peersFile.fileName();
+        } else {
+            args << "sh" << scriptPath << peersFile.fileName();
+        }
+        
+        qDebug() << "Executing:" << "pkexec" << args;
+        process.start("pkexec", args);
+        
+        if (!process.waitForFinished(30000)) { // 30 second timeout
+            QString errorMsg = "Update script timed out";
+            qDebug() << errorMsg;
+            QFile::remove(scriptPath);
+            QFile::remove(policyPath);
+            emit error(errorMsg);
+            return false;
+        }
+        
+        if (process.exitCode() != 0) {
+            QString stdErr = QString::fromUtf8(process.readAllStandardError());
+            QString stdOut = QString::fromUtf8(process.readAllStandardOutput());
+            
+            // Special case: If the output contains "updated successfully" but exit code is non-zero,
+            // consider it a success and ignore the exit code
+            if ((stdOut.contains("updated successfully") || stdErr.contains("updated successfully")) && 
+                process.exitCode() == 1) {
+                qDebug() << "Script exited with code 1 but reported success in output, treating as success";
+                
+                // Clean up temporary files
+                QFile::remove(scriptPath);
+                QFile::remove(policyPath);
+                return true;
+            }
+            
+            QString errorMsg = "Update script failed with exit code " + QString::number(process.exitCode());
+            
+            if (!stdErr.isEmpty()) {
+                errorMsg += ": " + stdErr.trimmed();
+            } else if (!stdOut.isEmpty()) {
+                errorMsg += ": " + stdOut.trimmed();
+            }
+            
+            qDebug() << errorMsg;
+            QFile::remove(scriptPath);
+            QFile::remove(policyPath);
+            emit error(errorMsg);
+            return false;
+        }
+        
+        // Log the success output
+        QString output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+        if (!output.isEmpty()) {
+            qDebug() << "Script output:" << output;
+        }
+        
+        // Clean up temporary files
+        QFile::remove(scriptPath);
+        QFile::remove(policyPath);
         return true;
     }
 
@@ -349,9 +448,9 @@ private slots:
 
 private:
     QNetworkAccessManager* networkManager;
-    QString configPath;
     QThread* workerThread;
     PeerTester* peerTester;
+    bool debugMode;
 };
 
 #endif // PEERMANAGER_H

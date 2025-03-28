@@ -59,6 +59,10 @@
         Системный лоток приложений не доступен на данной системе.
       </translation>
     </message>
+    <message>
+      <source>Manage Peers</source>
+      <translation>Управление пирами</translation>
+    </message>
   </context>
   <context>
     <name>QObject</name>
@@ -170,11 +174,119 @@
       <source></source>
       <translation></translation>
     </message>
-    <!--
+  </context>
+  <context>
+    <name>PeerDiscoveryDialog</name>
     <message>
-      <source></source>
-      <translation></translation>
+      <source>Peer Discovery</source>
+      <translation>Поиск пиров</translation>
     </message>
-    -->
+    <message>
+      <source>Found %1 peers</source>
+      <translation>Найдено %1 пиров</translation>
+    </message>
+    <message>
+      <source>Testing peers: %1/%2</source>
+      <translation>Тестирование пиров: %1/%2</translation>
+    </message>
+    <message>
+      <source>Testing complete</source>
+      <translation>Тестирование завершено</translation>
+    </message>
+    <message>
+      <source>Testing canceled</source>
+      <translation>Тестирование отменено</translation>
+    </message>
+    <message>
+      <source>Refresh</source>
+      <translation>Обновить</translation>
+    </message>
+    <message>
+      <source>Test</source>
+      <translation>Тест</translation>
+    </message>
+    <message>
+      <source>Stop</source>
+      <translation>Стоп</translation>
+    </message>
+    <message>
+      <source>Apply</source>
+      <translation>Применить</translation>
+    </message>
+    <message>
+      <source>Host</source>
+      <translation>Хост</translation>
+    </message>
+    <message>
+      <source>Latency</source>
+      <translation>Задержка</translation>
+    </message>
+    <message>
+      <source>Status</source>
+      <translation>Статус</translation>
+    </message>
+    <message>
+      <source>Valid</source>
+      <translation>Валидный</translation>
+    </message>
+    <message>
+      <source>Not Tested</source>
+      <translation>Не тестирован</translation>
+    </message>
+    <message>
+      <source>Invalid</source>
+      <translation>Невалидный</translation>
+    </message>
+    <message>
+      <source>Failed</source>
+      <translation>Ошибка</translation>
+    </message>
+    <message>
+      <source>Ready</source>
+      <translation>Готов</translation>
+    </message>
+    <message>
+      <source>Fetching peers...</source>
+      <translation>Получение списка пиров...</translation>
+    </message>
+    <message>
+      <source>Cancel Testing</source>
+      <translation>Отмена тестирования</translation>
+    </message>
+    <message>
+      <source>Testing is in progress. Cancel and close the dialog?</source>
+      <translation>Идёт тестирование. Отменить тестирование и закрыть диалог?</translation>
+    </message>
+    <message>
+      <source>Warning</source>
+      <translation>Предупреждение</translation>
+    </message>
+    <message>
+      <source>No peers selected</source>
+      <translation>Не выбраны пиры</translation>
+    </message>
+    <message>
+      <source>Success</source>
+      <translation>Успешно</translation>
+    </message>
+    <message>
+      <source>Configuration updated with %1 peers</source>
+      <translation>Конфигурация обновлена с %1 пирами</translation>
+    </message>
+    <message>
+      <source>Error</source>
+      <translation>Ошибка</translation>
+    </message>
+    <message>
+      <source>Failed to update configuration</source>
+      <translation>Не удалось обновить конфигурацию</translation>
+    </message>
+  </context>
+  <context>
+    <name>PeerManager</name>
+    <message>
+      <source>Failed to fetch peers: %1</source>
+      <translation>Не удалось получить список пиров: %1</translation>
+    </message>
   </context>
 </TS>

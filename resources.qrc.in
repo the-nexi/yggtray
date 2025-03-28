@@ -6,6 +6,10 @@
     <qresource prefix="/translations" lang="ru">
       <file alias="yggtray.qm">@CMAKE_BINARY_DIR@/yggtray_ru.qm</file>
     </qresource>
-
+    <qresource prefix="/scripts">
+        <file alias="update-peers.sh">@CMAKE_CURRENT_SOURCE_DIR@/update-peers.sh</file>
+    </qresource>
+    <qresource prefix="/polkit">
+        <file alias="org.yggtray.updatepeers.policy">@CMAKE_CURRENT_SOURCE_DIR@/org.yggtray.updatepeers.policy</file>
+    </qresource>
 </RCC>
-

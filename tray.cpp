@@ -63,10 +63,11 @@ class YggdrasilTray : public QObject {
     Q_OBJECT
 
 public:
-    explicit YggdrasilTray(QObject *parent = nullptr)
-        : QObject(parent),
-          serviceManager("yggdrasil"),
-          socketManager(POSSIBLE_YGG_SOCKET_PATHS) {
+    explicit YggdrasilTray(bool debugMode = false, QObject *parent = nullptr)
+        : QObject(parent)
+        , serviceManager("yggdrasil")
+        , socketManager(POSSIBLE_YGG_SOCKET_PATHS)
+        , debugMode(debugMode) {
         trayIcon = new QSystemTrayIcon(this);
         trayIcon->setIcon(QIcon(ICON_NOT_RUNNING));
         trayIcon->setToolTip(TOOLTIP);
@@ -194,10 +195,11 @@ private:
     QAction *managePeersAction;
     ServiceManager serviceManager;
     SocketManager socketManager;
+    bool debugMode;
 
 private slots:
     void showPeerManager() {
-        PeerDiscoveryDialog dialog(nullptr);
+        PeerDiscoveryDialog dialog(debugMode, nullptr);
         if (dialog.exec() == QDialog::Accepted) {
             // Restart the service to apply the new configuration
             if (serviceManager.isServiceRunning()) {
@@ -217,7 +219,8 @@ void printHelp(const char* program) {
          << "Options:" << endl
          << "    --help, -h        Print this message." << endl
          << "    --version         Print Yggtray version." << endl
-         << "    --setup           Run the setup wizard." << endl;
+         << "    --setup           Run the setup wizard." << endl
+         << "    --verbose, -v     Enable verbose debug output." << endl;
 }
 
 /**
@@ -249,6 +252,7 @@ int main(int argc, char *argv[]) {
 
     // Argument parsing
     bool forceSetup = false;
+    bool debugMode = false;
     for (int i = 1; i < argc; ++i) {
         QString arg = argv[i];
 
@@ -265,6 +269,10 @@ int main(int argc, char *argv[]) {
         if (arg == "--setup") {
             forceSetup = true;
         }
+
+        if ((arg == "--verbose") || (arg == "-v")) {
+            debugMode = true;
+        }
     }
 
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
@@ -280,7 +288,7 @@ int main(int argc, char *argv[]) {
     SetupWizard wizard;
     wizard.run(forceSetup);
 
-    YggdrasilTray tray;
+    YggdrasilTray tray(debugMode);
 
     return app.exec();
 }
