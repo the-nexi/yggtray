@@ -37,9 +37,19 @@ Q_DECLARE_METATYPE(QList<PeerData>)
 /**
  * @class PeerTester
  * @brief Worker class that tests peers in a separate thread
+ * 
+ * @details Handles network latency testing for Yggdrasil peers in a dedicated thread.
+ *          Uses ping command to measure latency and determine peer validity.
+ *          Supports cancellation and timeout of ping operations.
  */
 class PeerTester : public QObject {
     Q_OBJECT
+
+public:
+    // Constants for ping test configuration
+    static constexpr int PING_COUNT = 3;            // Number of pings to send
+    static constexpr int CHECK_INTERVAL_MS = 100;   // Interval to check ping status
+    static constexpr int PING_TIMEOUT_MS = 5000;    // Total timeout for ping operation
 
 public:
     explicit PeerTester(QObject *parent = nullptr) 
@@ -48,17 +58,17 @@ public:
 public slots:
     void testPeer(PeerData peer) {
         if (cancelRequested.loadAcquire()) {
-            qDebug() << "Skipping test for" << peer.host << "due to cancellation";
+            qDebug() << "[PeerTester::testPeer] Skipping test for:" << peer.host << "(cancelled)";
             return;
         }
 
-        qDebug() << "Testing peer:" << peer.host;
+        qDebug() << "[PeerTester::testPeer] Starting test for:" << peer.host;
 
         // Create process on heap instead of stack
         QProcess* pingProcess = new QProcess(this);
         QStringList args;
         QString hostToPing = peer.host.split("://").last().split(":").first();
-        args << "-c" << "3" << hostToPing;
+        args << "-c" << QString::number(PING_COUNT) << hostToPing;
         
         // Add to active processes list with heap-allocated process
         {
@@ -74,31 +84,30 @@ public slots:
                     pingProcess->deleteLater();
                 });
         
-        qDebug() << "Running ping for:" << hostToPing << "with args:" << args;
+        qDebug() << "[PeerTester::testPeer] Running ping command - host:" << hostToPing << "args:" << args;
         pingProcess->start("ping", args);
         
-        const int checkIntervalMs = 100;
-        int timeoutRemaining = 5000;
+        int timeoutRemaining = PING_TIMEOUT_MS;
         
-        while (!pingProcess->waitForFinished(checkIntervalMs)) {
+        while (!pingProcess->waitForFinished(CHECK_INTERVAL_MS)) {
             if (cancelRequested.loadAcquire()) {
-                qDebug() << "Ping cancelled for:" << peer.host;
+                qDebug() << "[PeerTester::testPeer] Ping cancelled for:" << peer.host;
                 // Let the process finish on its own through the connected signal
                 pingProcess->terminate(); // Use terminate instead of kill
                 // Don't wait here - let the finished signal handle cleanup
                 return;
             }
             
-            timeoutRemaining -= checkIntervalMs;
+            timeoutRemaining -= CHECK_INTERVAL_MS;
             if (timeoutRemaining <= 0) {
-                qDebug() << "Ping timeout for:" << peer.host;
+                qDebug() << "[PeerTester::testPeer] Ping timeout after" << PING_TIMEOUT_MS << "ms for:" << peer.host;
                 pingProcess->terminate();
                 break;
             }
         }
         
         if (cancelRequested.loadAcquire()) {
-            qDebug() << "Test cancelled after ping completed for:" << peer.host;
+            qDebug() << "[PeerTester::testPeer] Test cancelled after ping completion for:" << peer.host;
             return;
         }
         
@@ -106,17 +115,17 @@ public slots:
         QString output = pingProcess->readAllStandardOutput();
         QRegularExpression rx("min/avg/max/mdev = \\d+\\.\\d+/([\\d.]+)/\\d+\\.\\d+/\\d+\\.\\d+");
         auto match = rx.match(output);
-        qDebug() << "Ping output for" << peer.host << ":" << output;
+        qDebug() << "[PeerTester::testPeer] Ping output for:" << peer.host << "-" << output;
         if (match.hasMatch()) {
             peer.latency = match.captured(1).toDouble();
             peer.isValid = true;
-            qDebug() << "Latency for" << peer.host << ":" << peer.latency << "ms";
+            qDebug() << "[PeerTester::testPeer] Latency for:" << peer.host << "-" << peer.latency << "ms";
         } else {
-            qDebug() << "No latency match for:" << peer.host;
+            qDebug() << "[PeerTester::testPeer] No latency match in ping output for:" << peer.host;
         }
 
         if (!cancelRequested.loadAcquire()) {
-            qDebug() << "Emitting peerTested signal for:" << peer.host << "isValid:" << peer.isValid;
+            qDebug() << "[PeerTester::testPeer] Emitting peerTested signal - host:" << peer.host << "isValid:" << peer.isValid;
             emit peerTested(peer);
         }
     }
@@ -126,12 +135,12 @@ public slots:
         
         // Instead of directly killing processes, just mark them for termination
         // Each process will check this flag and terminate itself in its own thread
-        qDebug() << "=== CANCELLATION REQUESTED: Marking" << activeProcesses.size() << "active ping processes for termination ===";
+        qDebug() << "[PeerTester::requestCancel] Marking" << activeProcesses.size() << "active ping processes for termination";
     }
     
     void resetCancellation() {
         cancelRequested.storeRelease(0);
-        qDebug() << "=== CANCELLATION FLAG RESET ===";
+        qDebug() << "[PeerTester::resetCancellation] Cancellation flag reset";
     }
 
 signals:
@@ -146,9 +155,25 @@ private:
 /**
  * @class PeerManager
  * @brief Manages Yggdrasil peer discovery, testing, and configuration
+ * 
+ * @details This class provides functionality for:
+ *          - Discovering peers from public repositories
+ *          - Testing peer connection quality
+ *          - Updating Yggdrasil configuration with selected peers
+ *          - Managing peer testing in a separate thread
+ *          
+ * Thread safety:
+ * - Network operations run in the main thread
+ * - Peer testing runs in a dedicated worker thread
+ * - Resource cleanup is handled automatically
  */
 class PeerManager : public QObject {
     Q_OBJECT
+
+public:
+    // Constants for configuration
+    static constexpr int SCRIPT_TIMEOUT_MS = 30000;    // Timeout for update script execution
+    static constexpr int MAX_PEERS = 15;               // Maximum number of peers to use in config
 
 public:
     explicit PeerManager(bool debugMode = false, QObject *parent = nullptr) 
@@ -220,7 +245,7 @@ public:
      */
     void resetCancellation() {
         if (peerTester) {
-            qDebug() << "=== PeerManager: Resetting cancellation flag ===";
+            qDebug() << "[PeerManager::resetCancellation] Requesting cancellation flag reset";
             QMetaObject::invokeMethod(peerTester, "resetCancellation", Qt::QueuedConnection);
         }
     }
@@ -230,30 +255,32 @@ public:
      */
     void cancelTests() {
         if (peerTester) {
-            qDebug() << "=== PeerManager: Requesting cancellation of all tests ===";
+            qDebug() << "[PeerManager::cancelTests] Requesting cancellation of all active tests";
             // Use a direct connection to ensure immediate execution
             QMetaObject::invokeMethod(peerTester, "requestCancel", Qt::DirectConnection);
-            qDebug() << "=== PeerManager: Cancellation request sent ===";
+            qDebug() << "[PeerManager::cancelTests] Cancellation request sent to PeerTester";
         } else {
-            qDebug() << "=== PeerManager: No peerTester available to cancel tests ===";
+            qDebug() << "[PeerManager::cancelTests] Error: No PeerTester instance available";
         }
     }
 
     /**
-     * @brief Updates yggdrasil config with selected peers
-     * @param selectedPeers List of peers to include in config
-     * @return true if config was updated successfully
+     * @brief Extracts a resource file to a specified location
+     * @param resourcePath Path to the resource file in Qt's resource system
+     * @param outputPath Path where the resource should be extracted
+     * @return true if extraction was successful, false otherwise
+     * @details If the resource has .sh extension, the output file will be made executable
      */
     bool extractResource(const QString& resourcePath, const QString& outputPath) {
         QFile resourceFile(resourcePath);
         if (!resourceFile.open(QIODevice::ReadOnly)) {
-            qDebug() << "Failed to open resource:" << resourcePath;
+            qDebug() << "[PeerManager::extractResource] Failed to open resource:" << resourcePath;
             return false;
         }
 
         QFile outputFile(outputPath);
         if (!outputFile.open(QIODevice::WriteOnly)) {
-            qDebug() << "Failed to create file:" << outputPath;
+            qDebug() << "[PeerManager::extractResource] Failed to create output file:" << outputPath;
             return false;
         }
 
@@ -271,13 +298,25 @@ public:
         return true;
     }
 
+    /**
+     * @brief Updates Yggdrasil configuration with selected peers
+     * @param selectedPeers List of peers to include in configuration
+     * @return true if configuration was successfully updated
+     * @details
+     * - Sorts peers by latency (valid peers first, then lowest latency)
+     * - Extracts update script and policy file to temporary location
+     * - Creates temporary file with peer list
+     * - Executes update script with elevated privileges via polkit
+     * - Handles special case where exit code 1 with success message is valid
+     * - Cleans up temporary files regardless of outcome
+     */
     bool updateConfig(const QList<PeerData>& selectedPeers) {
-        qDebug() << "Attempting to update config with" << selectedPeers.count() << "peers";
+        qDebug() << "[PeerManager::updateConfig] Starting update with" << selectedPeers.count() << "peers";
         
         // Count valid peers for logging
         int totalValidPeers = std::count_if(selectedPeers.begin(), selectedPeers.end(), 
                                            [](const PeerData& p) { return p.isValid; });
-        qDebug() << "Total valid peers in selection:" << totalValidPeers;
+        qDebug() << "[PeerManager::updateConfig] Valid peers in selection:" << totalValidPeers;
         
         // Sort peers by latency (lowest first)
         QList<PeerData> sortedPeers = selectedPeers;
@@ -294,21 +333,21 @@ public:
         QString policyPath = "/tmp/org.yggtray.updatepeers.policy";
         
         if (!extractResource(":/scripts/update-peers.sh", scriptPath)) {
-            qDebug() << "Failed to extract update script";
+            qDebug() << "[PeerManager::updateConfig] Failed to extract update script";
             return false;
         }
         
         if (!extractResource(":/polkit/org.yggtray.updatepeers.policy", policyPath)) {
             // Clean up script if policy extraction fails
             QFile::remove(scriptPath);
-            qDebug() << "Failed to extract policy file";
+            qDebug() << "[PeerManager::updateConfig] Failed to extract policy file";
             return false;
         }
         
         // Create temporary file with peer list
         QTemporaryFile peersFile;
         if (!peersFile.open()) {
-            qDebug() << "Failed to create temporary file:" << peersFile.errorString();
+            qDebug() << "[PeerManager::updateConfig] Failed to create temporary peers file:" << peersFile.errorString();
             return false;
         }
         
@@ -326,7 +365,7 @@ public:
         
         // If no valid peers, use all peers as a fallback
         if (validPeerCount == 0) {
-            qDebug() << "WARNING: No valid peers found. Using all peers as fallback.";
+            qDebug() << "[PeerManager::updateConfig] Warning: No valid peers found, using all peers as fallback";
             stream.seek(0); // Reset the stream position
             
             // Use all peers instead, sorted by latency if available
@@ -334,9 +373,9 @@ public:
                 stream << peer.host << "\n";
             }
             
-            qDebug() << "Writing all" << sortedPeers.count() << "peers to config file (script will use up to 15)";
+            qDebug() << "[PeerManager::updateConfig] Writing" << sortedPeers.count() << "peers to config (up to" << MAX_PEERS << "will be used)";
         } else {
-            qDebug() << "Writing" << validPeerCount << "valid peers to config file (script will use up to 15)";
+            qDebug() << "[PeerManager::updateConfig] Writing" << validPeerCount << "valid peers to config (up to" << MAX_PEERS << "will be used)";
         }
         
         stream.flush();
@@ -344,7 +383,7 @@ public:
         // Debug: Read back file content to verify it's not empty
         peersFile.seek(0);
         QString fileContent = QString::fromUtf8(peersFile.readAll());
-        qDebug() << "Peers file content:" << (fileContent.isEmpty() ? "EMPTY!" : "Contains data");
+        qDebug() << "[PeerManager::updateConfig] Verifying peers file:" << (fileContent.isEmpty() ? "EMPTY!" : "Contains data");
         peersFile.seek(0);  // Reset position for the script to read
         
         // Execute update script with elevated privileges
@@ -356,12 +395,12 @@ public:
             args << "sh" << scriptPath << peersFile.fileName();
         }
         
-        qDebug() << "Executing:" << "pkexec" << args;
+        qDebug() << "[PeerManager::updateConfig] Executing update script - command: pkexec" << args;
         process.start("pkexec", args);
         
-        if (!process.waitForFinished(30000)) { // 30 second timeout
+        if (!process.waitForFinished(SCRIPT_TIMEOUT_MS)) {
             QString errorMsg = "Update script timed out";
-            qDebug() << errorMsg;
+            qDebug() << "[PeerManager::updateConfig] Error:" << errorMsg;
             QFile::remove(scriptPath);
             QFile::remove(policyPath);
             emit error(errorMsg);
@@ -376,7 +415,7 @@ public:
             // consider it a success and ignore the exit code
             if ((stdOut.contains("updated successfully") || stdErr.contains("updated successfully")) && 
                 process.exitCode() == 1) {
-                qDebug() << "Script exited with code 1 but reported success in output, treating as success";
+                qDebug() << "[PeerManager::updateConfig] Script exited with code 1 but reported success, treating as successful";
                 
                 // Clean up temporary files
                 QFile::remove(scriptPath);
@@ -392,7 +431,7 @@ public:
                 errorMsg += ": " + stdOut.trimmed();
             }
             
-            qDebug() << errorMsg;
+            qDebug() << "[PeerManager::updateConfig] Error:" << errorMsg;
             QFile::remove(scriptPath);
             QFile::remove(policyPath);
             emit error(errorMsg);
@@ -402,7 +441,7 @@ public:
         // Log the success output
         QString output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
         if (!output.isEmpty()) {
-            qDebug() << "Script output:" << output;
+            qDebug() << "[PeerManager::updateConfig] Script output:" << output;
         }
         
         // Clean up temporary files
@@ -418,6 +457,11 @@ signals:
     void requestTestPeer(PeerData peer);
 
 private slots:
+    /**
+     * @brief Handles the response from public peers repository
+     * @param reply Network reply containing peer list HTML
+     * @details Parses HTML to extract peer URIs and emits peersDiscovered signal
+     */
     void handleNetworkResponse(QNetworkReply* reply) {
         if (reply->error() == QNetworkReply::NoError) {
             QString html = QString::fromUtf8(reply->readAll());
@@ -447,6 +491,10 @@ private slots:
         reply->deleteLater();
     }
     
+    /**
+     * @brief Handles the completion of a peer test
+     * @param peer The tested peer with updated latency and validity
+     */
     void handlePeerTested(const PeerData& peer) {
         emit peerTested(peer);
     }
