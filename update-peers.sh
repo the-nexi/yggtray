@@ -19,17 +19,26 @@ if [ -z "$1" ]; then
 fi
 
 PEERS_FILE="$1"
-CONFIG_FILE="/etc/yggdrasil.conf"
+PRIMARY_CONFIG="/etc/yggdrasil.conf"
+SECONDARY_CONFIG="/etc/yggdrasil/yggdrasil.conf"
+
+# Determine the correct config file path
+if [ -f "$PRIMARY_CONFIG" ]; then
+    CONFIG_FILE="$PRIMARY_CONFIG"
+    [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Using config at $CONFIG_FILE" >&2
+elif [ -f "$SECONDARY_CONFIG" ]; then
+    CONFIG_FILE="$SECONDARY_CONFIG"
+    [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Using config at $CONFIG_FILE" >&2
+else
+    echo "Error: Yggdrasil config not found at $PRIMARY_CONFIG or $SECONDARY_CONFIG" >&2
+    exit 1
+fi
+
 BACKUP_FILE="${CONFIG_FILE}.bckp"
 TEMP_FILE=$(mktemp)
 
 if [ ! -f "$PEERS_FILE" ]; then
     echo "Error: Peer list file not found: $PEERS_FILE" >&2
-    exit 1
-fi
-
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo "Error: Yggdrasil config not found: $CONFIG_FILE" >&2
     exit 1
 fi
 
