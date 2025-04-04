@@ -9,8 +9,6 @@
 #define SERVICEMANAGER_H
 
 #include <QString>
-#include <QProcess>
-#include <QDebug>
 
 /**
  * @class ServiceManager
@@ -35,15 +33,7 @@ public:
      * Uses the `systemctl is-active` command to determine the status
      * of the specified service.
      */
-    bool isServiceRunning() const {
-        QProcess process;
-        QStringList arguments = {"is-active", serviceName};
-        process.start("systemctl", arguments);
-        process.waitForFinished();
-
-        QString output = process.readAllStandardOutput().trimmed();
-        return (output == "active");
-    }
+    bool isServiceRunning() const;
 
     /**
      * @brief Starts the specified service.
@@ -51,9 +41,7 @@ public:
      *
      * Executes the `systemctl start` command using pkexec.
      */
-    bool startService() const {
-        return executeCommand("start");
-    }
+    bool startService() const;
 
     /**
      * @brief Stops the specified service.
@@ -61,9 +49,7 @@ public:
      *
      * Executes the `systemctl stop` command using pkexec.
      */
-    bool stopService() const {
-        return executeCommand("stop");
-    }
+    bool stopService() const;
 
     /**
      * @brief Enables and starts the specified service immediately.
@@ -72,9 +58,7 @@ public:
      *
      * Executes the `systemctl enable --now` command using pkexec.
      */
-    bool enableService() const {
-        return executeCommand("enable --now");
-    }
+    bool enableService() const;
 
 private:
     QString serviceName; ///< The name of the service to manage.
@@ -87,25 +71,7 @@ private:
      * This method uses pkexec to run the systemctl command with
      * elevated privileges.
      */
-    bool executeCommand(const QString &action) const {
-        QProcess process;
-        QStringList arguments = {"systemctl"};
-        arguments << action.split(' ') << serviceName;
-        process.start("pkexec", arguments);
-        process.waitForFinished();
-
-        if (process.exitCode() == 0) {
-            qDebug() << action
-                     << "command executed successfully for"
-                     << serviceName;
-            return true;
-        } else {
-            qDebug() << action
-                     << "command failed for"
-                     << serviceName << ":" << process.readAllStandardError();
-            return false;
-        }
-    }
+    bool executeCommand(const QString &action) const;
 };
 
 #endif // SERVICEMANAGER_H
