@@ -11,7 +11,7 @@ This wiard can be launched by running `yggtray --setup` command.
 
 * `--setup` - show setup wizard
 * `--version` - show version
-
+* `--verbose` - verbose mode
 
 ## Installation
 
