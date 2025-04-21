@@ -84,7 +84,7 @@ void PeerTester::testPeer(PeerData peer) {
 
     if (!cancelRequested.loadAcquire()) {
         qDebug() << "[PeerTester::testPeer] Emitting peerTested signal - host:" << peer.host << "isValid:" << peer.isValid;
-        emit peerTested(peer); // Corrected indentation and removed extra closing brace
+        emit peerTested(peer);
     }
 }
 
