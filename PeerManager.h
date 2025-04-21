@@ -143,6 +143,14 @@ public:
      */
     bool updateConfig(const QList<PeerData>& selectedPeers);
 
+    /**
+     * @brief Exports the given list of peers to a CSV file
+     * @param fileName The full path to the CSV file to be created/overwritten
+     * @param peerList The list of peers to export
+     * @return true if the export was successful, false otherwise
+     */
+    bool exportPeersToCsv(const QString& fileName, const QList<PeerData>& peerList);
+
 signals:
     void peersDiscovered(const QList<PeerData>& peers);
     void peerTested(const PeerData& peer);

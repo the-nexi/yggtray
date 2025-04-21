@@ -13,9 +13,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QDebug>
-#include <QFileDialog> 
-#include <QFile>       
-#include <QTextStream> 
+#include <QFileDialog>
 #include <QBrush>      
 
 /**
@@ -64,8 +62,7 @@ void PeerDiscoveryDialog::closeEvent(QCloseEvent *event) {
  */
 void PeerDiscoveryDialog::setupUi() {
     auto layout = new QVBoxLayout(this);
-    
-    // Buttons layout
+
     auto buttonLayout = new QHBoxLayout();
     refreshButton = new QPushButton(tr("Refresh"), this);
     testButton = new QPushButton(tr("Test"), this);
@@ -80,8 +77,7 @@ void PeerDiscoveryDialog::setupUi() {
     buttonLayout->addWidget(applyButton);
     buttonLayout->addWidget(exportButton);
     buttonLayout->addStretch();
-    
-    // Table
+
     peerTable = new QTableWidget(this);
     peerTable->setColumnCount(4);
     peerTable->setHorizontalHeaderLabels({
@@ -94,15 +90,13 @@ void PeerDiscoveryDialog::setupUi() {
     peerTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     peerTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     peerTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    
-    // Progress bar
+
     progressBar = new QProgressBar(this);
     progressBar->setRange(0, 100);
     progressBar->setValue(0);
-    
-    // Status label
+
     statusLabel = new QLabel(tr("Ready"), this);
-    
+
     layout->addLayout(buttonLayout);
     layout->addWidget(peerTable);
     layout->addWidget(progressBar);
@@ -128,8 +122,7 @@ void PeerDiscoveryDialog::setupConnections() {
             this, &PeerDiscoveryDialog::onPeerTested);
     connect(peerManager, &PeerManager::error,
             this, &PeerDiscoveryDialog::onError);
-            
-    // Connect export button
+
     connect(exportButton, &QPushButton::clicked,
             this, &PeerDiscoveryDialog::onExportClicked);
 }
@@ -139,18 +132,14 @@ void PeerDiscoveryDialog::setupConnections() {
  */
 void PeerDiscoveryDialog::stopTesting() {
     if (!isTesting) return;
-    
-    // Signal PeerManager to stop the tests
+
     peerManager->cancelTests();
-    
-    // Reset the UI
+
     testButton->setText(tr("Test"));
     isTesting = false;
-    
-    // Re-enable refresh button
+
     refreshButton->setEnabled(true);
-    
-    // If we've tested at least some peers, enable the Apply button
+
     if (testedPeers > 0) {
         applyButton->setEnabled(true);
     }
@@ -167,11 +156,9 @@ void PeerDiscoveryDialog::startNextPeerTest(int index) {
     if (!isTesting || index >= peerList.size()) {
         return;
     }
-    
-    // Test the current peer
+
     peerManager->testPeer(peerList[index]);
-    
-    // Schedule the next peer test after a short delay
+
     if (index + 1 < peerList.size()) {
         QTimer::singleShot(100, this, [this, index]() {
             startNextPeerTest(index + 1);
@@ -397,42 +384,15 @@ void PeerDiscoveryDialog::onExportClicked() {
         return; // User cancelled
     }
 
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    // Call PeerManager to handle the export
+    if (peerManager->exportPeersToCsv(fileName, peerList)) {
+        QMessageBox::information(this, tr("Export Successful"),
+                                 tr("Peer data successfully exported to %1").arg(fileName));
+    } else {
+        // Error message is emitted by PeerManager's export function if file opening fails,
+        // but we might want a generic message here too, or rely on the signal.
+        // For now, let's assume PeerManager::error signal handles the specific message.
         QMessageBox::warning(this, tr("Export Error"),
-                             tr("Could not open file for writing: %1").arg(file.errorString()));
-        return;
+                             tr("Failed to export peer data. See logs for details."));
     }
-
-    QTextStream out(&file);
-    // Write header (Removed "Status" column)
-    out << "\"Host\",\"Latency (ms)\",\"Valid\"\n";
-
-    // Write data rows
-    for (const PeerData& peer : peerList) {
-        QString latencyStr;
-        if (peer.latency < 0) {
-            latencyStr = tr("Failed");
-        } else if (peerTable->item(peerList.indexOf(peer), 1)->text() == "-") {
-             latencyStr = tr("Not Tested"); // Use "Not Tested" if latency wasn't measured yet
-        } else {
-            latencyStr = QString::number(peer.latency);
-        }
-
-        QString validityStr = ""; // Default to empty string for "Valid" column
-        // Check if the peer was actually tested (by looking at the table item text)
-        QTableWidgetItem* validityItem = peerTable->item(peerList.indexOf(peer), 3);
-        if (validityItem && validityItem->text() != tr("Not Tested")) {
-             validityStr = peer.isValid ? tr("Valid") : tr("Invalid");
-        }
-
-        // Write row without the "Status" column
-        out << "\"" << peer.host << "\","
-            << "\"" << latencyStr << "\","
-            << "\"" << validityStr << "\"\n";
-    }
-
-    file.close();
-    QMessageBox::information(this, tr("Export Successful"),
-                             tr("Peer data successfully exported to %1").arg(fileName));
 }

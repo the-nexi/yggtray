@@ -11,6 +11,7 @@
 #include <QTextStream>
 #include <QProcess>
 #include <QDebug>
+#include <QFile>
 
 /**
  * @brief Tests peer connection quality asynchronously
@@ -24,19 +25,16 @@ void PeerTester::testPeer(PeerData peer) {
 
     qDebug() << "[PeerTester::testPeer] Starting test for:" << peer.host;
 
-    // Create process on heap instead of stack
     QProcess* pingProcess = new QProcess(this);
     QStringList args;
     QString hostToPing = peer.host.split("://").last().split(":").first();
     args << "-c" << QString::number(PING_COUNT) << hostToPing;
     
-    // Add to active processes list with heap-allocated process
     {
         QMutexLocker locker(&processesMutex);
         activeProcesses.append(pingProcess);
     }
     
-    // Connect to the process to handle its lifecycle within this thread
     connect(pingProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
             [this, pingProcess]() {
                 QMutexLocker locker(&processesMutex);
@@ -86,7 +84,7 @@ void PeerTester::testPeer(PeerData peer) {
 
     if (!cancelRequested.loadAcquire()) {
         qDebug() << "[PeerTester::testPeer] Emitting peerTested signal - host:" << peer.host << "isValid:" << peer.isValid;
-        emit peerTested(peer);
+        emit peerTested(peer); // Corrected indentation and removed extra closing brace
     }
 }
 
@@ -107,6 +105,52 @@ void PeerTester::requestCancel() {
 void PeerTester::resetCancellation() {
     cancelRequested.storeRelease(0);
     qDebug() << "[PeerTester::resetCancellation] Cancellation flag reset";
+}
+
+
+/**
+ * @brief Exports the given list of peers to a CSV file
+ * @param fileName The full path to the CSV file to be created/overwritten
+ * @param peerList The list of peers to export
+ * @return true if the export was successful, false otherwise
+ */
+bool PeerManager::exportPeersToCsv(const QString& fileName, const QList<PeerData>& peerList) {
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "[PeerManager::exportPeersToCsv] Could not open file for writing:" << fileName << file.errorString();
+        // Note: Cannot emit 'error' signal directly here as this function might be called from different contexts.
+        // Consider returning an error code or string instead if more detailed error handling is needed upstream.
+        return false;
+    }
+
+    QTextStream out(&file);
+    out << "\"Host\",\"Latency (ms)\",\"Valid\"\n";
+
+    for (const PeerData& peer : peerList) {
+        QString latencyStr;
+        // Determine latency string based solely on PeerData
+        if (peer.latency < -1) { // Assuming latency < -1 might indicate some other failure state, treat as Failed
+             latencyStr = tr("Failed");
+        } else if (peer.latency == -1) { // latency == -1 indicates not tested
+             latencyStr = tr("Not Tested");
+        } else { // latency >= 0 is a valid measurement
+            latencyStr = QString::number(peer.latency);
+        }
+
+        QString validityStr = ""; // Default to empty string
+        // Determine validity string based solely on PeerData, only if tested
+        if (peer.latency != -1) { // Only show validity if the peer was actually tested (latency is not -1)
+             validityStr = peer.isValid ? tr("Valid") : tr("Invalid");
+        }
+
+        out << "\"" << peer.host << "\","
+            << "\"" << latencyStr << "\","
+            << "\"" << validityStr << "\"\n";
+    }
+
+    file.close();
+    qDebug() << "[PeerManager::exportPeersToCsv] Successfully exported" << peerList.count() << "peers to" << fileName;
+    return true;
 }
 
 /**

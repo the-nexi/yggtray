@@ -4,3 +4,4 @@ docs/html/
 .vscode
 .~lock.yggdrasil-peers.csv#
 yggdrasil-peers.csv
+.clinerules
