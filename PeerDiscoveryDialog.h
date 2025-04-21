@@ -29,6 +29,7 @@ private slots:
     void onRefreshClicked();
     void onTestClicked();
     void onApplyClicked();
+    void onExportClicked(); // Added export slot
     void startNextPeerTest(int index);
 
 private:
@@ -40,6 +41,7 @@ private:
     QPushButton* refreshButton;
     QPushButton* testButton;
     QPushButton* applyButton;
+    QPushButton* exportButton; // Added export button member
     QTableWidget* peerTable;
     QProgressBar* progressBar;
     QLabel* statusLabel;

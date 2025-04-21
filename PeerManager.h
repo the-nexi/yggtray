@@ -19,6 +19,11 @@ struct PeerData {
     QString host;
     int latency = -1;      // in milliseconds
     bool isValid = false;
+
+    // Define equality operator based on host
+    bool operator==(const PeerData& other) const {
+        return host == other.host;
+    }
 };
 
 // Register PeerData for use with queued connections

@@ -2,3 +2,5 @@ build
 docs/html/
 .cache
 .vscode
+.~lock.yggdrasil-peers.csv#
+yggdrasil-peers.csv

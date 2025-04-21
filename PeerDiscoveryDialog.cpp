@@ -13,6 +13,10 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QDebug>
+#include <QFileDialog> 
+#include <QFile>       
+#include <QTextStream> 
+#include <QBrush>      
 
 /**
  * @brief Constructor for PeerDiscoveryDialog
@@ -66,12 +70,15 @@ void PeerDiscoveryDialog::setupUi() {
     refreshButton = new QPushButton(tr("Refresh"), this);
     testButton = new QPushButton(tr("Test"), this);
     applyButton = new QPushButton(tr("Apply"), this);
+    exportButton = new QPushButton(tr("Export CSV"), this);
     testButton->setEnabled(false);
     applyButton->setEnabled(false);
+    exportButton->setEnabled(false);
     
     buttonLayout->addWidget(refreshButton);
     buttonLayout->addWidget(testButton);
     buttonLayout->addWidget(applyButton);
+    buttonLayout->addWidget(exportButton);
     buttonLayout->addStretch();
     
     // Table
@@ -121,6 +128,10 @@ void PeerDiscoveryDialog::setupConnections() {
             this, &PeerDiscoveryDialog::onPeerTested);
     connect(peerManager, &PeerManager::error,
             this, &PeerDiscoveryDialog::onError);
+            
+    // Connect export button
+    connect(exportButton, &QPushButton::clicked,
+            this, &PeerDiscoveryDialog::onExportClicked);
 }
 
 /**
@@ -145,6 +156,7 @@ void PeerDiscoveryDialog::stopTesting() {
     }
     
     statusLabel->setText(tr("Testing canceled"));
+    exportButton->setEnabled(!peerList.isEmpty());
 }
 
 /**
@@ -188,6 +200,7 @@ void PeerDiscoveryDialog::onPeersDiscovered(const QList<PeerData>& peers) {
 
     statusLabel->setText(tr("Found %1 peers").arg(peers.count()));
     testButton->setEnabled(true);
+    exportButton->setEnabled(peers.count() > 0);
 }
 
 /**
@@ -221,8 +234,13 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
                 // Color code based on status
                 for (int col = 0; col < peerTable->columnCount(); ++col) {
                     QTableWidgetItem* item = peerTable->item(i, col);
-                    item->setBackground(peer.isValid ? QColor(220, 255, 220) : QColor(255, 220, 220));
-                    item->setForeground(QColor(0, 0, 0));
+                    if (item) { // Ensure item exists before modifying
+                        // Use setData with BackgroundRole and ForegroundRole
+                        QColor backgroundColor = peer.isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
+                        QColor foregroundColor = QColor(0, 0, 0); // Standard black text
+                        item->setData(Qt::BackgroundRole, backgroundColor);
+                        item->setData(Qt::ForegroundRole, foregroundColor);
+                    }
                 }
             }
             break;
@@ -245,6 +263,7 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
         testButton->setText(tr("Test"));
         testButton->setEnabled(true);
         refreshButton->setEnabled(true); // Re-enable refresh button when testing completes
+        exportButton->setEnabled(!peerList.isEmpty()); // Enable export if list not empty
         isTesting = false;
     }
 }
@@ -264,6 +283,7 @@ void PeerDiscoveryDialog::onRefreshClicked() {
     statusLabel->setText(tr("Fetching peers..."));
     testButton->setEnabled(false);
     applyButton->setEnabled(false);
+    exportButton->setEnabled(false); // Disable export during refresh
     progressBar->setValue(0);
     peerManager->fetchPeers();
 }
@@ -282,6 +302,7 @@ void PeerDiscoveryDialog::onTestClicked() {
     totalPeers = peerList.count();
     progressBar->setValue(0);
     applyButton->setEnabled(false);
+    exportButton->setEnabled(false); // Disable export during testing
     // Disable the refresh button during testing
     refreshButton->setEnabled(false);
     statusLabel->setText(tr("Testing peers: 0/%1").arg(totalPeers));
@@ -356,4 +377,62 @@ void PeerDiscoveryDialog::onApplyClicked() {
         QMessageBox::critical(this, tr("Error"),
                             tr("Failed to update configuration"));
     }
+}
+
+/**
+ * @brief Handle export button click
+ */
+void PeerDiscoveryDialog::onExportClicked() {
+    if (peerList.isEmpty()) {
+        QMessageBox::information(this, tr("Export CSV"), tr("No peer data to export."));
+        return;
+    }
+
+    QString defaultFileName = "yggdrasil-peers.csv";
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Export Peers as CSV"),
+                                                    defaultFileName,
+                                                    tr("CSV Files (*.csv);;All Files (*)"));
+
+    if (fileName.isEmpty()) {
+        return; // User cancelled
+    }
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Export Error"),
+                             tr("Could not open file for writing: %1").arg(file.errorString()));
+        return;
+    }
+
+    QTextStream out(&file);
+    // Write header (Removed "Status" column)
+    out << "\"Host\",\"Latency (ms)\",\"Valid\"\n";
+
+    // Write data rows
+    for (const PeerData& peer : peerList) {
+        QString latencyStr;
+        if (peer.latency < 0) {
+            latencyStr = tr("Failed");
+        } else if (peerTable->item(peerList.indexOf(peer), 1)->text() == "-") {
+             latencyStr = tr("Not Tested"); // Use "Not Tested" if latency wasn't measured yet
+        } else {
+            latencyStr = QString::number(peer.latency);
+        }
+
+        QString validityStr = ""; // Default to empty string for "Valid" column
+        // Check if the peer was actually tested (by looking at the table item text)
+        QTableWidgetItem* validityItem = peerTable->item(peerList.indexOf(peer), 3);
+        if (validityItem && validityItem->text() != tr("Not Tested")) {
+             validityStr = peer.isValid ? tr("Valid") : tr("Invalid");
+        }
+
+        // Write row without the "Status" column
+        out << "\"" << peer.host << "\","
+            << "\"" << latencyStr << "\","
+            << "\"" << validityStr << "\"\n";
+    }
+
+    file.close();
+    QMessageBox::information(this, tr("Export Successful"),
+                             tr("Peer data successfully exported to %1").arg(fileName));
 }

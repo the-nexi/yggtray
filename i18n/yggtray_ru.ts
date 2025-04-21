@@ -281,6 +281,38 @@
       <source>Failed to update configuration</source>
       <translation>Не удалось обновить конфигурацию</translation>
     </message>
+    <message>
+      <source>Export CSV</source>
+      <translation>Экспорт в CSV</translation>
+    </message>
+    <message>
+      <source>No peer data to export.</source>
+      <translation>Нет данных о пирах для экспорта.</translation>
+    </message>
+    <message>
+      <source>Export Peers as CSV</source>
+      <translation>Экспортировать пиры в CSV</translation>
+    </message>
+    <message>
+      <source>CSV Files (*.csv);;All Files (*)</source>
+      <translation>CSV файлы (*.csv);;Все файлы (*)</translation>
+    </message>
+    <message>
+      <source>Export Error</source>
+      <translation>Ошибка экспорта</translation>
+    </message>
+    <message>
+      <source>Could not open file for writing: %1</source>
+      <translation>Не удалось открыть файл для записи: %1</translation>
+    </message>
+    <message>
+      <source>Export Successful</source>
+      <translation>Экспорт успешен</translation>
+    </message>
+    <message>
+      <source>Peer data successfully exported to %1</source>
+      <translation>Данные пиров успешно экспортированы в %1</translation>
+    </message>
   </context>
   <context>
     <name>PeerManager</name>

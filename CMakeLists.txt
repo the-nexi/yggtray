@@ -8,7 +8,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 # Define the version
-set(YGGTRAY_VERSION "0.1.9")
+set(YGGTRAY_VERSION "0.1.10")
 add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
 
 find_package(Qt5Widgets REQUIRED)
