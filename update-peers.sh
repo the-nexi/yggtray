@@ -34,7 +34,6 @@ else
     exit 1
 fi
 
-BACKUP_FILE="${CONFIG_FILE}.bckp"
 TEMP_FILE=$(mktemp)
 
 if [ ! -f "$PEERS_FILE" ]; then
@@ -44,10 +43,6 @@ fi
 
 # Clean up temp file on exit
 trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
-
-# Create a backup of the original config file
-[ "$VERBOSE_MODE" = "1" ] && echo "Debug: Creating backup of configuration file to $BACKUP_FILE" >&2
-cp "$CONFIG_FILE" "$BACKUP_FILE"
 
 # Process and clean up the peers file - trim whitespace, ensure proper formatting
 [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Processing peer list from $PEERS_FILE..." >&2
@@ -93,6 +88,12 @@ if ! grep -q '[^[:space:]]' "$TEMP_FILE.peers"; then
     exit 1
 fi
 
+# Create a timestamped backup before modifying
+TIMESTAMP=$(date +%Y-%m-%dT%H%M%S%z) # ISO 8601 format (filename safe)
+TIMESTAMPED_BACKUP_FILE="${CONFIG_FILE}.bckp-${TIMESTAMP}"
+[ "$VERBOSE_MODE" = "1" ] && echo "Debug: Creating timestamped backup: $TIMESTAMPED_BACKUP_FILE" >&2
+cp "$CONFIG_FILE" "$TIMESTAMPED_BACKUP_FILE"
+
 # Process the config file using awk
 [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Reading current configuration from $CONFIG_FILE..." >&2
 [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Updating configuration..." >&2
@@ -133,10 +134,10 @@ fi
 # Replace the original config with the new one
 cp "$TEMP_FILE" "$CONFIG_FILE"
 [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Configuration file updated successfully" >&2
-[ "$VERBOSE_MODE" = "1" ] && echo "Debug: Backup saved to $BACKUP_FILE" >&2
+[ "$VERBOSE_MODE" = "1" ] && echo "Debug: Timestamped backup saved to $TIMESTAMPED_BACKUP_FILE" >&2
 
 echo "Peers updated successfully in $CONFIG_FILE"
-echo "Backup of original configuration saved to $BACKUP_FILE"
+echo "Timestamped backup of original configuration saved to $TIMESTAMPED_BACKUP_FILE"
 [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Operation completed" >&2
 
 # Explicitly exit with success code
