@@ -12,99 +12,118 @@
 #include <QProcess>
 #include <QDebug>
 #include <QFile>
+#include <QThreadPool>
 
 /**
- * @brief Tests peer connection quality asynchronously
- * @param peer The peer to test
+ * @brief Constructor for PeerTestRunnable
+ * @param peer The peer data to test.
+ * @param cancelFlag Pointer to the shared cancellation flag.
+ * @param parent Optional QObject parent.
  */
-void PeerTester::testPeer(PeerData peer) {
-    if (cancelRequested.loadAcquire()) {
-        qDebug() << "[PeerTester::testPeer] Skipping test for:" << peer.host << "(cancelled)";
+PeerTestRunnable::PeerTestRunnable(PeerData peer, QAtomicInt* cancelFlag, QObject *parent)
+    : QObject(parent), QRunnable(), peerData(peer), cancelFlagPtr(cancelFlag) {
+    setAutoDelete(true); 
+}
+
+/**
+ * @brief The main execution method for the runnable task.
+ * @details Overrides QRunnable::run(). Performs the ping test.
+ */
+void PeerTestRunnable::run() {
+    if (cancelFlagPtr && cancelFlagPtr->loadAcquire()) {
+        qDebug() << "[PeerTestRunnable::run] Skipping test for:" << peerData.host << "(cancelled before start)";
+        emit peerTested(peerData); 
         return;
     }
 
-    qDebug() << "[PeerTester::testPeer] Starting test for:" << peer.host;
+    qDebug() << "[PeerTestRunnable::run] Starting test for:" << peerData.host << "on thread" << QThread::currentThreadId();
 
-    QProcess* pingProcess = new QProcess(this);
+    QProcess pingProcess; 
     QStringList args;
-    QString hostToPing = peer.host.split("://").last().split(":").first();
-    args << "-c" << QString::number(PING_COUNT) << hostToPing;
-    
-    {
-        QMutexLocker locker(&processesMutex);
-        activeProcesses.append(pingProcess);
+    QString hostToPing = peerData.host;
+    if (hostToPing.contains("://")) {
+        hostToPing = hostToPing.split("://").last();
+    }
+    if (hostToPing.contains("]:")) { // IPv6 with port
+        hostToPing = hostToPing.section(']', 0, 0).mid(1); // Get content inside []
+    } else if (hostToPing.contains(':')) { // IPv4 with port
+        hostToPing = hostToPing.section(':', 0, 0);
     }
     
-    connect(pingProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-            [this, pingProcess]() {
-                QMutexLocker locker(&processesMutex);
-                activeProcesses.removeAll(pingProcess);
-                pingProcess->deleteLater();
-            });
-    
-    qDebug() << "[PeerTester::testPeer] Running ping command - host:" << hostToPing << "args:" << args;
-    pingProcess->start("ping", args);
-    
+    args << "-c" << QString::number(PING_COUNT) << hostToPing;
+
+    qDebug() << "[PeerTestRunnable::run] Running ping command - host:" << hostToPing << "args:" << args;
+    pingProcess.start("ping", args);
+
     int timeoutRemaining = PING_TIMEOUT_MS;
-    
-    while (!pingProcess->waitForFinished(CHECK_INTERVAL_MS)) {
-        if (cancelRequested.loadAcquire()) {
-            qDebug() << "[PeerTester::testPeer] Ping cancelled for:" << peer.host;
-            // Let the process finish on its own through the connected signal
-            pingProcess->terminate(); // Use terminate instead of kill
-            // Don't wait here - let the finished signal handle cleanup
-            return;
+
+    // Loop while waiting for the process to finish, checking for cancellation
+    while (!pingProcess.waitForFinished(CHECK_INTERVAL_MS)) {
+        if (cancelFlagPtr && cancelFlagPtr->loadAcquire()) {
+            qDebug() << "[PeerTestRunnable::run] Ping cancelled for:" << peerData.host;
+            if (pingProcess.state() == QProcess::Running) {
+                pingProcess.terminate();
+                if (!pingProcess.waitForFinished(500)) { 
+                    qDebug() << "[PeerTestRunnable::run] Ping terminate failed, killing process for:" << peerData.host;
+                    pingProcess.kill();
+                    pingProcess.waitForFinished(100); 
+                }
+            }
+            emit peerTested(peerData); 
+            return; 
         }
-        
+
         timeoutRemaining -= CHECK_INTERVAL_MS;
         if (timeoutRemaining <= 0) {
-            qDebug() << "[PeerTester::testPeer] Ping timeout after" << PING_TIMEOUT_MS << "ms for:" << peer.host;
-            pingProcess->terminate();
-            break;
+            qDebug() << "[PeerTestRunnable::run] Ping timeout after" << PING_TIMEOUT_MS << "ms for:" << peerData.host;
+            if (pingProcess.state() == QProcess::Running) {
+                pingProcess.terminate();
+                 if (!pingProcess.waitForFinished(500)) {
+                    qDebug() << "[PeerTestRunnable::run] Ping terminate failed on timeout, killing process for:" << peerData.host;
+                    pingProcess.kill();
+                    pingProcess.waitForFinished(100);
+                 }
+            }
+            emit peerTested(peerData); 
+            return; 
         }
     }
-    
-    if (cancelRequested.loadAcquire()) {
-        qDebug() << "[PeerTester::testPeer] Test cancelled after ping completion for:" << peer.host;
+
+    if (cancelFlagPtr && cancelFlagPtr->loadAcquire()) {
+        qDebug() << "[PeerTestRunnable::run] Test cancelled after ping completion for:" << peerData.host;
+        emit peerTested(peerData); 
         return;
     }
-    
-    // Process results only if not cancelled
-    QString output = pingProcess->readAllStandardOutput();
-    QRegularExpression rx("min/avg/max/mdev = \\d+\\.\\d+/([\\d.]+)/\\d+\\.\\d+/\\d+\\.\\d+");
-    auto match = rx.match(output);
-    qDebug() << "[PeerTester::testPeer] Ping output for:" << peer.host << "-" << output;
-    if (match.hasMatch()) {
-        peer.latency = match.captured(1).toDouble();
-        peer.isValid = true;
-        qDebug() << "[PeerTester::testPeer] Latency for:" << peer.host << "-" << peer.latency << "ms";
+
+    // Process results only if not cancelled and process finished normally
+    if (pingProcess.exitStatus() == QProcess::NormalExit && pingProcess.exitCode() == 0) {
+        QString output = pingProcess.readAllStandardOutput();
+        QRegularExpression rx("min/avg/max(?:/mdev)? = [\\d.]+/([\\d.]+)/[\\d.]+"); 
+        auto match = rx.match(output);
+        qDebug() << "[PeerTestRunnable::run] Ping output for:" << peerData.host << "-" << output.trimmed();
+        if (match.hasMatch()) {
+            bool ok;
+            double latency = match.captured(1).toDouble(&ok);
+            if (ok) {
+                peerData.latency = static_cast<int>(latency + 0.5); 
+                peerData.isValid = true;
+                qDebug() << "[PeerTestRunnable::run] Latency for:" << peerData.host << "-" << peerData.latency << "ms";
+            } else {
+                 qDebug() << "[PeerTestRunnable::run] Failed to parse latency double for:" << peerData.host;
+                 peerData.isValid = false; 
+            }
+        } else {
+            qDebug() << "[PeerTestRunnable::run] No latency match in ping output for:" << peerData.host;
+            peerData.isValid = false; 
+        }
     } else {
-        qDebug() << "[PeerTester::testPeer] No latency match in ping output for:" << peer.host;
+         qDebug() << "[PeerTestRunnable::run] Ping process failed or exited abnormally for:" << peerData.host 
+                  << "ExitCode:" << pingProcess.exitCode() << "ExitStatus:" << pingProcess.exitStatus();
+         peerData.isValid = false; 
     }
 
-    if (!cancelRequested.loadAcquire()) {
-        qDebug() << "[PeerTester::testPeer] Emitting peerTested signal - host:" << peer.host << "isValid:" << peer.isValid;
-        emit peerTested(peer);
-    }
-}
-
-/**
- * @brief Requests cancellation of all active peer tests
- */
-void PeerTester::requestCancel() {
-    cancelRequested.storeRelease(1);
-    
-    // Instead of directly killing processes, just mark them for termination
-    // Each process will check this flag and terminate itself in its own thread
-    qDebug() << "[PeerTester::requestCancel] Marking" << activeProcesses.size() << "active ping processes for termination";
-}
-
-/**
- * @brief Resets the cancellation flag to allow new tests to run
- */
-void PeerTester::resetCancellation() {
-    cancelRequested.storeRelease(0);
-    qDebug() << "[PeerTester::resetCancellation] Cancellation flag reset";
+    qDebug() << "[PeerTestRunnable::run] Emitting peerTested signal - host:" << peerData.host << "isValid:" << peerData.isValid << "latency:" << peerData.latency;
+    emit peerTested(peerData);
 }
 
 
@@ -161,41 +180,30 @@ bool PeerManager::exportPeersToCsv(const QString& fileName, const QList<PeerData
 PeerManager::PeerManager(bool debugMode, QObject *parent) 
     : QObject(parent)
     , networkManager(new QNetworkAccessManager(this))
+    , threadPool(new QThreadPool(this)) 
+    , cancelTestsFlag(0)               
     , debugMode(debugMode) {
     
-    // Register PeerData type for queued connections between threads
     qRegisterMetaType<PeerData>("PeerData");
     qRegisterMetaType<QList<PeerData>>("QList<PeerData>");
     
     connect(networkManager, &QNetworkAccessManager::finished,
             this, &PeerManager::handleNetworkResponse);
             
-    // Create and start the worker thread
-    workerThread = new QThread(this);
-    peerTester = new PeerTester();
-    peerTester->moveToThread(workerThread);
-    
-    // Connect signals and slots for thread communication
-    connect(this, &PeerManager::requestTestPeer, 
-            peerTester, &PeerTester::testPeer, 
-            Qt::QueuedConnection);
-    connect(peerTester, &PeerTester::peerTested,
-            this, &PeerManager::handlePeerTested,
-            Qt::QueuedConnection);
-    connect(workerThread, &QThread::finished, 
-            peerTester, &QObject::deleteLater);
-            
-    workerThread->start();
+    threadPool->setMaxThreadCount(5); 
+    qDebug() << "[PeerManager] Thread pool initialized with max" << threadPool->maxThreadCount() << "threads.";
 }
 
 /**
  * @brief Destructor for PeerManager
  */
 PeerManager::~PeerManager() {
-    // Clean up thread on destruction
-    cancelTests();
-    workerThread->quit();
-    workerThread->wait();
+    qDebug() << "[PeerManager::~PeerManager] Cleaning up...";
+    cancelTests(); 
+    threadPool->clear(); 
+    qDebug() << "[PeerManager::~PeerManager] Waiting for active tests to finish...";
+    bool allFinished = threadPool->waitForDone(-1); 
+    qDebug() << "[PeerManager::~PeerManager] All tests finished:" << allFinished;
 }
 
 /**
@@ -222,31 +230,32 @@ QString PeerManager::getHostname(const QString& peerUri) const {
  * @param peer The peer to test
  */
 void PeerManager::testPeer(PeerData peer) {
-    emit requestTestPeer(peer);
+    PeerTestRunnable* task = new PeerTestRunnable(peer, &cancelTestsFlag);
+
+    connect(task, &PeerTestRunnable::peerTested, 
+            this, &PeerManager::handlePeerTested, 
+            Qt::QueuedConnection);
+
+    qDebug() << "[PeerManager::testPeer] Submitting test task for:" << peer.host;
+    threadPool->start(task); 
 }
 
 /**
  * @brief Resets the cancellation flag to allow new tests to run
  */
 void PeerManager::resetCancellation() {
-    if (peerTester) {
-        qDebug() << "[PeerManager::resetCancellation] Requesting cancellation flag reset";
-        QMetaObject::invokeMethod(peerTester, "resetCancellation", Qt::QueuedConnection);
-    }
+    qDebug() << "[PeerManager::resetCancellation] Resetting cancellation flag.";
+    cancelTestsFlag.storeRelease(0); 
 }
 
 /**
  * @brief Cancels all ongoing peer tests
  */
 void PeerManager::cancelTests() {
-    if (peerTester) {
-        qDebug() << "[PeerManager::cancelTests] Requesting cancellation of all active tests";
-        // Use a direct connection to ensure immediate execution
-        QMetaObject::invokeMethod(peerTester, "requestCancel", Qt::DirectConnection);
-        qDebug() << "[PeerManager::cancelTests] Cancellation request sent to PeerTester";
-    } else {
-        qDebug() << "[PeerManager::cancelTests] Error: No PeerTester instance available";
-    }
+    qDebug() << "[PeerManager::cancelTests] Requesting cancellation of all active tests.";
+    cancelTestsFlag.storeRelease(1); 
+    threadPool->clear(); 
+    qDebug() << "[PeerManager::cancelTests] Cancellation flag set and thread pool queue cleared.";
 }
 
 /**
@@ -466,5 +475,6 @@ void PeerManager::handleNetworkResponse(QNetworkReply* reply) {
  * @param peer The tested peer with updated latency and validity
  */
 void PeerManager::handlePeerTested(const PeerData& peer) {
-    emit peerTested(peer);
+    qDebug() << "[PeerManager::handlePeerTested] Received result for:" << peer.host << "on thread" << QThread::currentThreadId();
+    emit peerTested(peer); 
 }

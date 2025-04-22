@@ -7,9 +7,10 @@
 #include <QProcess>
 #include <QElapsedTimer>
 #include <QList>
-#include <QThread>
-#include <QMutex>
+#include <QThreadPool>
+#include <QRunnable>
 #include <QAtomicInt>
+#include <QMutex> 
 
 /**
  * @struct PeerData
@@ -30,15 +31,18 @@ struct PeerData {
 Q_DECLARE_METATYPE(PeerData)
 Q_DECLARE_METATYPE(QList<PeerData>)
 
+// Forward declaration
+class PeerManager; 
+
 /**
- * @class PeerTester
- * @brief Worker class that tests peers in a separate thread
+ * @class PeerTestRunnable
+ * @brief Runnable task for testing a single peer's latency using QThreadPool.
  * 
- * @details Handles network latency testing for Yggdrasil peers in a dedicated thread.
- *          Uses ping command to measure latency and determine peer validity.
- *          Supports cancellation and timeout of ping operations.
+ * @details Encapsulates the logic for pinging a single peer and reporting results.
+ *          Designed to be run concurrently by a QThreadPool.
+ *          Includes cancellation support via a shared QAtomicInt.
  */
-class PeerTester : public QObject {
+class PeerTestRunnable : public QObject, public QRunnable {
     Q_OBJECT
 
 public:
@@ -47,23 +51,32 @@ public:
     static constexpr int CHECK_INTERVAL_MS = 100;   // Interval to check ping status
     static constexpr int PING_TIMEOUT_MS = 5000;    // Total timeout for ping operation
 
-public:
-    explicit PeerTester(QObject *parent = nullptr) 
-        : QObject(parent), cancelRequested(0) {}
+    /**
+     * @brief Constructor for PeerTestRunnable
+     * @param peer The peer data to test.
+     * @param cancelFlag Pointer to the shared cancellation flag.
+     * @param parent Optional QObject parent.
+     */
+    explicit PeerTestRunnable(PeerData peer, QAtomicInt* cancelFlag, QObject *parent = nullptr);
 
-public slots:
-    void testPeer(PeerData peer);
-    void requestCancel();
-    void resetCancellation();
+    /**
+     * @brief The main execution method for the runnable task.
+     * @details Overrides QRunnable::run(). Performs the ping test.
+     */
+    void run() override;
 
 signals:
+    /**
+     * @brief Emitted when the peer test is complete.
+     * @param peer The PeerData structure with updated latency and validity.
+     */
     void peerTested(const PeerData& peer);
 
 private:
-    QAtomicInt cancelRequested;
-    QList<QProcess*> activeProcesses;
-    QMutex processesMutex;
+    PeerData peerData;
+    QAtomicInt* cancelFlagPtr; // Shared cancellation flag
 };
+
 
 /**
  * @class PeerManager
@@ -155,7 +168,7 @@ signals:
     void peersDiscovered(const QList<PeerData>& peers);
     void peerTested(const PeerData& peer);
     void error(const QString& message);
-    void requestTestPeer(PeerData peer);
+    // Removed: void requestTestPeer(PeerData peer);
 
 private slots:
     /**
@@ -173,8 +186,8 @@ private slots:
 
 private:
     QNetworkAccessManager* networkManager;
-    QThread* workerThread;
-    PeerTester* peerTester;
+    QThreadPool* threadPool;
+    QAtomicInt cancelTestsFlag;
     bool debugMode;
 };
 

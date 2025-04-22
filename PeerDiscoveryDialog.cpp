@@ -128,6 +128,46 @@ void PeerDiscoveryDialog::setupConnections() {
 }
 
 /**
+ * @brief Resets the table UI to its initial state before testing.
+ */
+void PeerDiscoveryDialog::resetTableUI() {
+    for (int i = 0; i < peerTable->rowCount(); ++i) {
+        QTableWidgetItem* latencyItem = peerTable->item(i, 1);
+        if (!latencyItem) {
+            latencyItem = new QTableWidgetItem("-");
+            peerTable->setItem(i, 1, latencyItem);
+        } else {
+            latencyItem->setText("-");
+        }
+        
+        QTableWidgetItem* statusItem = peerTable->item(i, 2);
+         if (!statusItem) {
+            statusItem = new QTableWidgetItem("-");
+            peerTable->setItem(i, 2, statusItem);
+        } else {
+            statusItem->setText("-");
+        }
+
+        QTableWidgetItem* validityItem = peerTable->item(i, 3);
+        if (!validityItem) {
+            validityItem = new QTableWidgetItem(tr("Not Tested"));
+            peerTable->setItem(i, 3, validityItem);
+        } else {
+            validityItem->setText(tr("Not Tested"));
+        }
+
+        for (int col = 0; col < peerTable->columnCount(); ++col) {
+            QTableWidgetItem* item = peerTable->item(i, col);
+            if (item) {
+                item->setData(Qt::BackgroundRole, QVariant()); 
+                item->setData(Qt::ForegroundRole, QVariant()); 
+            }
+        }
+    }
+}
+
+
+/**
  * @brief Stop ongoing peer testing
  */
 void PeerDiscoveryDialog::stopTesting() {
@@ -148,23 +188,6 @@ void PeerDiscoveryDialog::stopTesting() {
     exportButton->setEnabled(!peerList.isEmpty());
 }
 
-/**
- * @brief Start testing next peer in the list
- * @param index Index of the peer to test
- */
-void PeerDiscoveryDialog::startNextPeerTest(int index) {
-    if (!isTesting || index >= peerList.size()) {
-        return;
-    }
-
-    peerManager->testPeer(peerList[index]);
-
-    if (index + 1 < peerList.size()) {
-        QTimer::singleShot(100, this, [this, index]() {
-            startNextPeerTest(index + 1);
-        });
-    }
-}
 
 /**
  * @brief Handle discovered peers data
@@ -198,17 +221,14 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
     testedPeers++;
     progressBar->setValue((testedPeers * 100) / totalPeers);
 
-    // Find the peer in the peerList and update it
     for (int i = 0; i < peerList.size(); ++i) {
         if (peerList[i].host == peer.host) {
-            // Update the peer in our list with the tested results
             peerList[i].latency = peer.latency;
             peerList[i].isValid = peer.isValid;
             qDebug() << "Updated peer in peerList:" << peer.host 
                      << "isValid:" << peer.isValid 
                      << "latency:" << peer.latency;
             
-            // Update the UI representation
             if (i < peerTable->rowCount()) {
                 peerTable->setItem(i, 1, new QTableWidgetItem(
                     peer.latency < 0 ? tr("Failed") : QString::number(peer.latency) + "ms"
@@ -218,13 +238,11 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
                     peer.isValid ? tr("Valid") : tr("Invalid")
                 ));
                 
-                // Color code based on status
                 for (int col = 0; col < peerTable->columnCount(); ++col) {
                     QTableWidgetItem* item = peerTable->item(i, col);
-                    if (item) { // Ensure item exists before modifying
-                        // Use setData with BackgroundRole and ForegroundRole
+                    if (item) { 
                         QColor backgroundColor = peer.isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
-                        QColor foregroundColor = QColor(0, 0, 0); // Standard black text
+                        QColor foregroundColor = QColor(0, 0, 0); 
                         item->setData(Qt::BackgroundRole, backgroundColor);
                         item->setData(Qt::ForegroundRole, foregroundColor);
                     }
@@ -249,8 +267,8 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
         applyButton->setEnabled(true);
         testButton->setText(tr("Test"));
         testButton->setEnabled(true);
-        refreshButton->setEnabled(true); // Re-enable refresh button when testing completes
-        exportButton->setEnabled(!peerList.isEmpty()); // Enable export if list not empty
+        refreshButton->setEnabled(true); 
+        exportButton->setEnabled(!peerList.isEmpty()); 
         isTesting = false;
     }
 }
@@ -270,7 +288,7 @@ void PeerDiscoveryDialog::onRefreshClicked() {
     statusLabel->setText(tr("Fetching peers..."));
     testButton->setEnabled(false);
     applyButton->setEnabled(false);
-    exportButton->setEnabled(false); // Disable export during refresh
+    exportButton->setEnabled(false); 
     progressBar->setValue(0);
     peerManager->fetchPeers();
 }
@@ -280,30 +298,37 @@ void PeerDiscoveryDialog::onRefreshClicked() {
  */
 void PeerDiscoveryDialog::onTestClicked() {
     if (isTesting) {
-        // If we're testing, then the button acts as a stop button
         stopTesting();
+        return; 
+    }
+
+    if (peerList.isEmpty()) {
+        statusLabel->setText(tr("No peers to test. Please refresh."));
         return;
     }
 
+    resetTableUI(); 
     testedPeers = 0;
     totalPeers = peerList.count();
     progressBar->setValue(0);
-    applyButton->setEnabled(false);
-    exportButton->setEnabled(false); // Disable export during testing
-    // Disable the refresh button during testing
-    refreshButton->setEnabled(false);
     statusLabel->setText(tr("Testing peers: 0/%1").arg(totalPeers));
-    
-    // Change button text to 'Stop'
-    testButton->setText(tr("Stop"));
+
+    applyButton->setEnabled(false);
+    exportButton->setEnabled(false); 
+    refreshButton->setEnabled(false); 
+    testButton->setText(tr("Stop")); 
+
     isTesting = true;
     
-    // Reset any previous cancellation before starting new tests
     peerManager->resetCancellation();
     
-    // Schedule peer tests to be started one by one using a timer
-    // rather than queuing them all at once
-    startNextPeerTest(0);
+    qDebug() << "[PeerDiscoveryDialog::onTestClicked] Starting parallel test for" << totalPeers << "peers.";
+    for (const PeerData& peer : peerList) {
+        PeerData peerToTest = peer; 
+        peerToTest.latency = -1;
+        peerToTest.isValid = false; 
+        peerManager->testPeer(peerToTest); 
+    }
 }
 
 /**
@@ -320,7 +345,6 @@ void PeerDiscoveryDialog::onApplyClicked() {
     }
     
     if (selectionModel->hasSelection()) {
-        // Get selected rows
         auto selectedRanges = selectionModel->selectedRows();
         qDebug() << "\nSelected rows:" << selectedRanges.count();
         for (const auto& range : selectedRanges) {
@@ -334,7 +358,6 @@ void PeerDiscoveryDialog::onApplyClicked() {
             }
         }
     } else {
-        // If no selection, use all rows
         qDebug() << "\nNo selection, using all" << peerList.size() << "peers";
         selectedPeers = peerList;
         for (const auto& peer : selectedPeers) {
@@ -381,17 +404,13 @@ void PeerDiscoveryDialog::onExportClicked() {
                                                     tr("CSV Files (*.csv);;All Files (*)"));
 
     if (fileName.isEmpty()) {
-        return; // User cancelled
+        return; 
     }
 
-    // Call PeerManager to handle the export
     if (peerManager->exportPeersToCsv(fileName, peerList)) {
         QMessageBox::information(this, tr("Export Successful"),
                                  tr("Peer data successfully exported to %1").arg(fileName));
     } else {
-        // Error message is emitted by PeerManager's export function if file opening fails,
-        // but we might want a generic message here too, or rely on the signal.
-        // For now, let's assume PeerManager::error signal handles the specific message.
         QMessageBox::warning(this, tr("Export Error"),
                              tr("Failed to export peer data. See logs for details."));
     }
