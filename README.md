@@ -5,7 +5,7 @@ allows to configure, run and control the Yggdrasil daemon.
 
 It also provides first setup wizard, which adds user to "yggdrasil" group in order to interface with Yggdrasil daemon, and optionally creates ip6tables rules to protect local services from exposure to yggdrasil network.
 
-This wiard can be launched by running `yggtray --setup` command.
+This wizard can be launched by running `yggtray --setup` command.
 
 ## CLI arguments
 
