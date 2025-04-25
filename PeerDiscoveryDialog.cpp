@@ -90,6 +90,7 @@ void PeerDiscoveryDialog::setupUi() {
     peerTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     peerTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     peerTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    peerTable->setSortingEnabled(true); // Enable built-in sorting
 
     progressBar = new QProgressBar(this);
     progressBar->setRange(0, 100);
@@ -132,13 +133,8 @@ void PeerDiscoveryDialog::setupConnections() {
  */
 void PeerDiscoveryDialog::resetTableUI() {
     for (int i = 0; i < peerTable->rowCount(); ++i) {
-        QTableWidgetItem* latencyItem = peerTable->item(i, 1);
-        if (!latencyItem) {
-            latencyItem = new QTableWidgetItem("-");
-            peerTable->setItem(i, 1, latencyItem);
-        } else {
-            latencyItem->setText("-");
-        }
+        // Reset latency using LatencyItem(-1) with proper test status parameters
+        peerTable->setItem(i, 1, new LatencyItem(-1, false, false));
         
         QTableWidgetItem* statusItem = peerTable->item(i, 2);
          if (!statusItem) {
@@ -203,7 +199,7 @@ void PeerDiscoveryDialog::onPeersDiscovered(const QList<PeerData>& peers) {
     for (int i = 0; i < peers.count(); ++i) {
         const auto& peer = peers[i];
         peerTable->setItem(i, 0, new QTableWidgetItem(peer.host));
-        peerTable->setItem(i, 1, new QTableWidgetItem("-"));
+        peerTable->setItem(i, 1, new LatencyItem(-1, false, false)); // Initial latency as untested
         peerTable->setItem(i, 2, new QTableWidgetItem("-"));
         peerTable->setItem(i, 3, new QTableWidgetItem(tr("Not Tested")));
     }
@@ -211,6 +207,27 @@ void PeerDiscoveryDialog::onPeersDiscovered(const QList<PeerData>& peers) {
     statusLabel->setText(tr("Found %1 peers").arg(peers.count()));
     testButton->setEnabled(true);
     exportButton->setEnabled(peers.count() > 0);
+}
+
+/**
+ * @brief Set consistent color for all cells in a row
+ * @param row The row index to color
+ * @param isValid Whether the peer is valid
+ * @param isTested Whether the peer has been tested
+ */
+void PeerDiscoveryDialog::setRowColor(int row, bool isValid, bool isTested) {
+    if (!isTested) return;
+    
+    QColor backgroundColor = isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
+    QColor foregroundColor = QColor(0, 0, 0);
+    
+    for (int col = 0; col < peerTable->columnCount(); ++col) {
+        QTableWidgetItem* item = peerTable->item(row, col);
+        if (item) {
+            item->setData(Qt::BackgroundRole, backgroundColor);
+            item->setData(Qt::ForegroundRole, foregroundColor);
+        }
+    }
 }
 
 /**
@@ -230,23 +247,23 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
                      << "latency:" << peer.latency;
             
             if (i < peerTable->rowCount()) {
-                peerTable->setItem(i, 1, new QTableWidgetItem(
-                    peer.latency < 0 ? tr("Failed") : QString::number(peer.latency) + "ms"
-                ));
-                peerTable->setItem(i, 2, new QTableWidgetItem("-")); // Remove speed display
+                // Temporarily disable sorting to prevent partial updates
+                bool wasSortingEnabled = peerTable->isSortingEnabled();
+                peerTable->setSortingEnabled(false);
+                
+                // Update all cells in the row
+                peerTable->setItem(i, 0, new QTableWidgetItem(peer.host));
+                peerTable->setItem(i, 1, new LatencyItem(peer.latency, peer.isValid, true));
+                peerTable->setItem(i, 2, new QTableWidgetItem("-"));
                 peerTable->setItem(i, 3, new QTableWidgetItem(
                     peer.isValid ? tr("Valid") : tr("Invalid")
                 ));
                 
-                for (int col = 0; col < peerTable->columnCount(); ++col) {
-                    QTableWidgetItem* item = peerTable->item(i, col);
-                    if (item) { 
-                        QColor backgroundColor = peer.isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
-                        QColor foregroundColor = QColor(0, 0, 0); 
-                        item->setData(Qt::BackgroundRole, backgroundColor);
-                        item->setData(Qt::ForegroundRole, foregroundColor);
-                    }
-                }
+                // Apply coloring to all cells
+                setRowColor(i, peer.isValid, true);
+                
+                // Re-enable sorting if it was enabled
+                peerTable->setSortingEnabled(wasSortingEnabled);
             }
             break;
         }

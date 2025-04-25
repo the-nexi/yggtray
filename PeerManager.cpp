@@ -105,16 +105,24 @@ void PeerTestRunnable::run() {
             bool ok;
             double latency = match.captured(1).toDouble(&ok);
             if (ok) {
-                peerData.latency = static_cast<int>(latency + 0.5); 
-                peerData.isValid = true;
-                qDebug() << "[PeerTestRunnable::run] Latency for:" << peerData.host << "-" << peerData.latency << "ms";
+                if (latency <= 0.0) {
+                    qDebug() << "[PeerTestRunnable::run] Invalid zero or negative latency for:" << peerData.host;
+                    peerData.latency = -1;
+                    peerData.isValid = false;
+                } else {
+                    // Round to integer milliseconds with minimum of 1ms
+                    peerData.latency = std::max(1, static_cast<int>(latency + 0.5));
+                    peerData.isValid = true;
+                    qDebug() << "[PeerTestRunnable::run] Latency for:" << peerData.host << "-" << peerData.latency << "ms";
+                }
             } else {
-                 qDebug() << "[PeerTestRunnable::run] Failed to parse latency double for:" << peerData.host;
-                 peerData.isValid = false; 
+                qDebug() << "[PeerTestRunnable::run] Failed to parse latency double for:" << peerData.host;
+                peerData.isValid = false; 
+                peerData.latency = -1;
             }
         } else {
             qDebug() << "[PeerTestRunnable::run] No latency match in ping output for:" << peerData.host;
-            peerData.isValid = false; 
+            peerData.isValid = false;
         }
     } else {
          qDebug() << "[PeerTestRunnable::run] Ping process failed or exited abnormally for:" << peerData.host 
@@ -125,7 +133,6 @@ void PeerTestRunnable::run() {
     qDebug() << "[PeerTestRunnable::run] Emitting peerTested signal - host:" << peerData.host << "isValid:" << peerData.isValid << "latency:" << peerData.latency;
     emit peerTested(peerData);
 }
-
 
 /**
  * @brief Exports the given list of peers to a CSV file
