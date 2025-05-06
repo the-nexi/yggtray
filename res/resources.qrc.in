@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="yggtray_running.png">@CMAKE_CURRENT_SOURCE_DIR@/res/icons/yggtray_running.png</file>
+        <file alias="yggtray_not_running.png">@CMAKE_CURRENT_SOURCE_DIR@/res/icons/yggtray_not_running.png</file>
+    </qresource>
+    <qresource prefix="/translations" lang="ru">
+      <file alias="yggtray.qm">@CMAKE_BINARY_DIR@/yggtray_ru.qm</file>
+    </qresource>
+    <qresource prefix="/scripts">
+        <file alias="update-peers.sh">@CMAKE_CURRENT_SOURCE_DIR@/res/scripts/update-peers.sh</file>
+    </qresource>
+    <qresource prefix="/polkit">
+        <file alias="org.yggtray.updatepeers.policy">@CMAKE_CURRENT_SOURCE_DIR@/res/polkit/org.yggtray.updatepeers.policy</file>
+    </qresource>
+</RCC>

@@ -16,7 +16,7 @@ find_package(Qt5Network REQUIRED)
 find_package(Qt5 COMPONENTS Core LinguistTools REQUIRED)
 
 set(TS_FILES
-  i18n/yggtray_ru.ts
+  res/i18n/yggtray_ru.ts
 )
 
 qt5_add_translation(QM_FILES ${TS_FILES})
@@ -44,7 +44,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTORCC ON)
 
 set(RESOURCES_FILE resources.qrc)
-configure_file("${RESOURCES_FILE}.in" "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
+configure_file("res/resources.qrc.in" "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 set_source_files_properties("${RESOURCES_FILE}" PROPERTIES GENERATED TRUE)
 
 # Add resources
@@ -52,18 +52,18 @@ qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 
 # Add executable
 add_executable(yggtray 
-    tray.cpp 
-    ServiceManager.cpp
-    SocketManager.cpp
-    PeerManager.cpp
-    PeerDiscoveryDialog.cpp
+    src/tray.cpp 
+    src/ServiceManager.cpp
+    src/SocketManager.cpp
+    src/PeerManager.cpp
+    src/PeerDiscoveryDialog.cpp
     ${RESOURCES} 
     ${QM_FILES}
 )
 target_link_libraries(yggtray Qt5::Widgets Qt5::Network)
 
 # Copy icon file to build directory
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/yggtray_running.png
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/res/icons/yggtray_running.png
               ${CMAKE_CURRENT_BINARY_DIR}/yggtray_running.png
               COPYONLY)
 
@@ -78,7 +78,7 @@ install(TARGETS yggtray DESTINATION ${INSTALL_BIN_DIR})
 install(FILES ${QM_FILES} DESTINATION ${QT_TRANSLATIONS_DIR})
 
 # Optional: Install a man page
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/yggtray.1 DESTINATION ${INSTALL_MAN_DIR})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/yggtray.1 DESTINATION ${INSTALL_MAN_DIR})
 
 # Add uninstall target
 if(NOT TARGET uninstall)

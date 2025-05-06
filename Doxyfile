@@ -11,7 +11,7 @@ USE_MDFILE_AS_MAINPAGE = README.md
 
 
 # Input settings
-INPUT                  = ./tray.cpp ./ServiceManager.h ./SocketManager.h
+INPUT                  = ./src
 FILE_PATTERNS          = *.cpp *.h
 RECURSIVE              = YES
 EXCLUDE                = 
@@ -86,5 +86,4 @@ WARN_AS_ERROR          = NO
 # External tools
 DOTFILE_DIRS           = 
 MSCGEN_PATH            = 
-PLANTUML_JAR_PATH      = 
-
+PLANTUML_JAR_PATH      =
