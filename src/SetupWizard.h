@@ -79,11 +79,109 @@ public:
             configureIptables();
         }
 
+        // Ensure Yggdrasil main config file exists
+        ensureYggdrasilConfigExists();
+
         // Mark setup as complete
         markSetupComplete();
     }
 
 private:
+    /**
+     * @brief Ensures the main Yggdrasil configuration file (yggdrasil.conf) exists.
+     *
+     * Checks common locations (/etc/yggdrasil/yggdrasil.conf or /etc/yggdrasil.conf)
+     * and creates an empty file if it's missing, using pkexec for permissions.
+     */
+    void ensureYggdrasilConfigExists() {
+        QString path1 = "/etc/yggdrasil/yggdrasil.conf";
+        QString path2 = "/etc/yggdrasil.conf";
+        QString targetPath;
+
+        if (QFile::exists(path1)) {
+            // qDebug() << "Yggdrasil config found at" << path1;
+            return;
+        }
+        if (QFile::exists(path2)) {
+            // qDebug() << "Yggdrasil config found at" << path2;
+            return;
+        }
+
+        // Neither exists, determine where to create it
+        QDir yggdrasilDir("/etc/yggdrasil");
+        if (yggdrasilDir.exists()) {
+            targetPath = path1;
+        } else {
+            targetPath = path2;
+        }
+
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(nullptr, QObject::tr("Yggdrasil Configuration"),
+                                      QString(QObject::tr("The Yggdrasil configuration file (%1) was not found. "
+                                                        "Would you like to generate it now using 'yggdrasil -genconf'?"))
+                                      .arg(targetPath),
+                                      QMessageBox::Yes|QMessageBox::No);
+
+        if (reply == QMessageBox::Yes) {
+            QProcess process;
+            QStringList args;
+
+            // Ensure parent directory exists if needed
+            QFileInfo fileInfo(targetPath);
+            QDir parentDir = fileInfo.dir();
+            if (targetPath.startsWith("/etc/yggdrasil/") && !parentDir.exists()) {
+                args << "mkdir" << "-p" << parentDir.absolutePath();
+                QProcess mkdirProcess;
+                mkdirProcess.start("pkexec", args);
+                mkdirProcess.waitForFinished(-1); // Wait for mkdir to complete
+                if (mkdirProcess.exitCode() != 0) {
+                    QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
+                                           QString(QObject::tr("Failed to create directory %1. "
+                                                             "Error: %2. Exit code: %3"))
+                                           .arg(parentDir.absolutePath(), mkdirProcess.errorString(), QString::number(mkdirProcess.exitCode())));
+                    return;
+                }
+            }
+            
+            // Command to generate the config file
+            // Example: pkexec bash -c "yggdrasil -genconf > '/etc/yggdrasil/yggdrasil.conf'"
+            QString command = QString("yggdrasil -genconf > '%1'").arg(targetPath);
+            
+            args.clear();
+            args << "bash" << "-c" << command;
+            
+            process.start("pkexec", args);
+            process.waitForFinished(-1); // Wait indefinitely
+
+            if (process.exitCode() == 0 && QFile::exists(targetPath)) {
+                // Additionally, check if the file is not empty, as genconf should produce content.
+                QFile genFile(targetPath);
+                if (genFile.open(QIODevice::ReadOnly)) {
+                    bool isEmpty = genFile.size() == 0;
+                    genFile.close();
+                    if (isEmpty) {
+                         QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
+                                       QString(QObject::tr("Yggdrasil configuration file was created at %1, but it is empty. 'yggdrasil -genconf' might have failed silently or yggdrasil command is not in PATH for root."))
+                                       .arg(targetPath));
+                    } else {
+                        QMessageBox::information(nullptr, QObject::tr("Yggdrasil Configuration"),
+                                                 QString(QObject::tr("Yggdrasil configuration file generated successfully at %1.")).arg(targetPath));
+                    }
+                } else {
+                     QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
+                                       QString(QObject::tr("Yggdrasil configuration file was created at %1, but could not be read to verify content."))
+                                       .arg(targetPath));
+                }
+            } else {
+                QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
+                                       QString(QObject::tr("Failed to generate Yggdrasil configuration file at %1. "
+                                                         "Command was: pkexec bash -c \"%2\". Error: %3. Exit code: %4. "
+                                                         "Ensure 'yggdrasil' is in the system PATH and pkexec is configured."))
+                                       .arg(targetPath, command, process.errorString(), QString::number(process.exitCode())));
+            }
+        }
+    }
+
     QString getConfigFilePath() const {
         QString configDirPath = QDir::homePath() + "/.config/yggdrasil";
         return configDirPath + "/yggtray.conf";
@@ -672,4 +770,3 @@ COMMIT)";
 };
 
 #endif // SETUPWIZARD_H
-
