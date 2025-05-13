@@ -171,8 +171,88 @@
       <translation>Не удалось включить и запустить сервис ip6tables.  Убедитесь, что он корректно установлен.</translation>
     </message>
     <message>
-      <source></source>
-      <translation></translation>
+      <source>Yggdrasil Configuration</source>
+      <translation>Конфигурация Yggdrasil</translation>
+    </message>
+    <message>
+      <source>The Yggdrasil configuration file (%1) was not found. Would you like to generate it now using 'yggdrasil -genconf'?</source>
+      <translation>Файл конфигурации Yggdrasil (%1) не найден. Хотите создать его сейчас с помощью 'yggdrasil -genconf'?</translation>
+    </message>
+    <message>
+      <source>Failed to create directory %1. Error: %2. Exit code: %3</source>
+      <translation>Не удалось создать каталог %1. Ошибка: %2. Код выхода: %3</translation>
+    </message>
+    <message>
+      <source>Yggdrasil configuration file was created at %1, but it is empty. 'yggdrasil -genconf' might have failed silently or yggdrasil command is not in PATH for root.</source>
+      <translation>Файл конфигурации Yggdrasil был создан в %1, но он пуст. Возможно, 'yggdrasil -genconf' завершилась с ошибкой без уведомления, или команда yggdrasil отсутствует в PATH для root.</translation>
+    </message>
+    <message>
+      <source>Yggdrasil configuration file generated successfully at %1.</source>
+      <translation>Файл конфигурации Yggdrasil успешно создан в %1.</translation>
+    </message>
+    <message>
+      <source>Yggdrasil configuration file was created at %1, but could not be read to verify content.</source>
+      <translation>Файл конфигурации Yggdrasil был создан в %1, но не удалось прочитать его для проверки содержимого.</translation>
+    </message>
+    <message>
+      <source>Failed to generate Yggdrasil configuration file at %1. Command was: pkexec bash -c "%2". Error: %3. Exit code: %4. Ensure 'yggdrasil' is in the system PATH and pkexec is configured.</source>
+      <translation>Не удалось создать файл конфигурации Yggdrasil в %1. Команда: pkexec bash -c "%2". Ошибка: %3. Код выхода: %4. Убедитесь, что 'yggdrasil' находится в системном PATH и pkexec настроен.</translation>
+    </message>
+    <message>
+      <source>The package '%1' is required for ip6tables configuration but is not installed. Would you like to install it now?</source>
+      <translation>Пакет '%1' необходим для настройки ip6tables, но он не установлен. Хотите установить его сейчас?</translation>
+    </message>
+    <message>
+      <source>Install</source>
+      <translation>Установить</translation>
+    </message>
+    <message>
+      <source>Package Installation</source>
+      <translation>Установка пакета</translation>
+    </message>
+    <message>
+      <source>The package installation window has been opened.
+
+Please complete the installation in the terminal window and then click OK to continue.</source>
+      <translation>Окно установки пакета было открыто.\n\nПожалуйста, завершите установку в окне терминала и нажмите ОК для продолжения.</translation>
+    </message>
+    <message>
+      <source>The package '%1' has been successfully installed.</source>
+      <translation>Пакет '%1' был успешно установлен.</translation>
+    </message>
+    <message>
+      <source>Failed to install package '%1' or the installation could not be verified. You may need to install it manually.</source>
+      <translation>Не удалось установить пакет '%1', или установка не может быть проверена. Возможно, вам потребуется установить его вручную.</translation>
+    </message>
+    <message>
+      <source>The 'netfilter-persistent' package is required for ip6tables configuration on this system but is not installed. Would you like to install it now?</source>
+      <translation>Пакет 'netfilter-persistent' необходим для настройки ip6tables в этой системе, но он не установлен. Хотите установить его сейчас?</translation>
+    </message>
+    <message>
+      <source>The netfilter-persistent installation window has been opened.
+
+Please complete the installation in the terminal window and then click OK to continue.</source>
+      <translation>Окно установки netfilter-persistent было открыто.\n\nПожалуйста, завершите установку в окне терминала и нажмите ОК для продолжения.</translation>
+    </message>
+    <message>
+      <source>ip6tables Configuration</source>
+      <translation>Настройка ip6tables</translation>
+    </message>
+    <message>
+      <source>Cannot configure ip6tables without the netfilter-persistent package.</source>
+      <translation>Невозможно настроить ip6tables без пакета netfilter-persistent.</translation>
+    </message>
+    <message>
+      <source>Cannot configure ip6tables without the required package.</source>
+      <translation>Невозможно настроить ip6tables без необходимого пакета.</translation>
+    </message>
+    <message>
+      <source>Failed to enable the netfilter-persistent service. Try running 'sudo netfilter-persistent save' and 'sudo netfilter-persistent reload' manually.</source>
+      <translation>Не удалось включить службу netfilter-persistent. Попробуйте выполнить 'sudo netfilter-persistent save' и 'sudo netfilter-persistent reload' вручную.</translation>
+    </message>
+    <message>
+      <source>Failed to enable and start the %1 service. Ensure it is properly installed.</source>
+      <translation>Не удалось включить и запустить службу %1. Убедитесь, что она правильно установлена.</translation>
     </message>
   </context>
   <context>
