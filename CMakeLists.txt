@@ -142,6 +142,22 @@ add_custom_target(appimage
 # Add Doxygen support
 find_package(Doxygen)
 
+# =========================
+# LibCheck & Unit Test Setup
+# =========================
+enable_testing()
+find_package(PkgConfig)
+pkg_check_modules(Check REQUIRED check)
+
+include_directories(${Check_INCLUDE_DIRS})
+link_directories(${Check_LIBRARY_DIRS})
+
+file(GLOB UNIT_TEST_SOURCES tests/unit/*.c)
+add_executable(unit_tests ${UNIT_TEST_SOURCES})
+target_link_libraries(unit_tests ${Check_LIBRARIES} pthread)
+
+add_test(NAME unit_tests COMMAND unit_tests)
+
 if (DOXYGEN_FOUND)
     set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/DoxygenDocs)
