@@ -39,7 +39,7 @@ jobs:
         wget \
         fuse \
         libfuse2 \
-        libcheck-dev
+        check
         # Configure FUSE for use in container
         sudo modprobe fuse
         sudo chmod 666 /dev/fuse
