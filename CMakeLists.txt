@@ -54,6 +54,7 @@ qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 add_executable(yggtray 
     src/tray.cpp 
     src/ServiceManager.cpp
+    src/ProcessRunner.cpp
     src/SocketManager.cpp
     src/PeerManager.cpp
     src/PeerDiscoveryDialog.cpp
