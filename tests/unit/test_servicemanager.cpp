@@ -94,15 +94,4 @@ Suite* servicemanager_suite(void)
     return s;
 }
 
-int main(void)
-{
-    int number_failed;
-    Suite* s = servicemanager_suite();
-    SRunner* sr = srunner_create(s);
-
-    srunner_run_all(sr, CK_NORMAL);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-
-    return (number_failed == 0) ? 0 : 1;
-}
+/* No main here: suite will be registered from the global test runner. */
