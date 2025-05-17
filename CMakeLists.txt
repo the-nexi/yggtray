@@ -14,6 +14,7 @@ add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Network REQUIRED)
 find_package(Qt5 COMPONENTS Core LinguistTools REQUIRED)
+find_package(Qt5Test REQUIRED)
 
 set(TS_FILES
   res/i18n/yggtray_ru.ts
@@ -165,7 +166,7 @@ add_executable(unit_tests
     src/PeerManager.cpp
 )
 target_include_directories(unit_tests PRIVATE ${Qt5Core_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(unit_tests ${Check_LIBRARIES} pthread Qt5::Core Qt5::Network)
+target_link_libraries(unit_tests ${Check_LIBRARIES} pthread Qt5::Core Qt5::Network Qt5::Test)
 
 add_test(NAME unit_tests COMMAND unit_tests)
 
