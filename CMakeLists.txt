@@ -153,9 +153,14 @@ pkg_check_modules(Check REQUIRED check)
 include_directories(${Check_INCLUDE_DIRS})
 link_directories(${Check_LIBRARY_DIRS})
 
-file(GLOB UNIT_TEST_SOURCES tests/unit/*.c)
-add_executable(unit_tests ${UNIT_TEST_SOURCES})
-target_link_libraries(unit_tests ${Check_LIBRARIES} pthread)
+file(GLOB UNIT_TEST_SOURCES tests/unit/*.cpp)
+add_executable(unit_tests
+    ${UNIT_TEST_SOURCES}
+    src/ServiceManager.cpp
+    src/ProcessRunner.cpp
+)
+target_include_directories(unit_tests PRIVATE ${Qt5Core_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(unit_tests ${Check_LIBRARIES} pthread Qt5::Core)
 
 add_test(NAME unit_tests COMMAND unit_tests)
 
