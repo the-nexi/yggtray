@@ -24,6 +24,7 @@
 #include <iostream>
 
 #include "ServiceManager.h"
+#include "ProcessRunner.h"
 #include "SocketManager.h"
 #include "SetupWizard.h"
 #include "PeerDiscoveryDialog.h"
@@ -65,7 +66,8 @@ class YggdrasilTray : public QObject {
 public:
     explicit YggdrasilTray(bool debugMode = false, QObject *parent = nullptr)
         : QObject(parent)
-        , serviceManager("yggdrasil")
+        , processRunner()
+        , serviceManager("yggdrasil", &processRunner)
         , socketManager(POSSIBLE_YGG_SOCKET_PATHS)
         , debugMode(debugMode) {
         trayIcon = new QSystemTrayIcon(this);
@@ -193,6 +195,7 @@ private:
     QAction *toggleAction;
     QAction *copyIPAction;
     QAction *managePeersAction;
+    ProcessRunner processRunner;
     ServiceManager serviceManager;
     SocketManager socketManager;
     bool debugMode;

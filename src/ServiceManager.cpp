@@ -6,7 +6,6 @@
  */
 
 #include "ServiceManager.h"
-#include <QProcess>
 #include <QDebug>
 
 /**
@@ -14,13 +13,11 @@
  * @return True if the service is running, false otherwise.
  */
 bool ServiceManager::isServiceRunning() const {
-    QProcess process;
+    QString output, errorOutput;
     QStringList arguments = {"is-active", serviceName};
-    process.start("systemctl", arguments);
-    process.waitForFinished();
-
-    QString output = process.readAllStandardOutput().trimmed();
-    return (output == "active");
+    int exitCode = processRunner->run("systemctl", arguments, output, errorOutput);
+    Q_UNUSED(errorOutput);
+    return (exitCode == 0 && output == "active");
 }
 
 /**
@@ -53,13 +50,12 @@ bool ServiceManager::enableService() const {
  * @return True if the command was successful, false otherwise.
  */
 bool ServiceManager::executeCommand(const QString &action) const {
-    QProcess process;
-    QStringList arguments = {"systemctl"};
-    arguments << action.split(' ') << serviceName;
-    process.start("pkexec", arguments);
-    process.waitForFinished();
+    QString output, errorOutput;
+    QStringList arguments = action.split(' ');
+    arguments << serviceName;
+    int exitCode = processRunner->run("pkexec", QStringList() << "systemctl" << arguments, output, errorOutput);
 
-    if (process.exitCode() == 0) {
+    if (exitCode == 0) {
         qDebug() << action
                  << "command executed successfully for"
                  << serviceName;
@@ -67,7 +63,7 @@ bool ServiceManager::executeCommand(const QString &action) const {
     } else {
         qDebug() << action
                  << "command failed for"
-                 << serviceName << ":" << process.readAllStandardError();
+                 << serviceName << ":" << errorOutput;
         return false;
     }
 }

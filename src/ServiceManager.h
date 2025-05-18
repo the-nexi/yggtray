@@ -17,14 +17,17 @@
  * This class provides methods to check the status of a service, start
  * a service, stop a service, and enable a service using system commands.
  */
+#include "IProcessRunner.h"
+
 class ServiceManager {
 public:
     /**
      * @brief Constructs a ServiceManager for the specified service.
      * @param serviceName The name of the service to manage.
+     * @param processRunner Pointer to an IProcessRunner implementation.
      */
-    explicit ServiceManager(const QString &serviceName)
-        : serviceName(serviceName) {}
+    ServiceManager(const QString &serviceName, const IProcessRunner *processRunner)
+        : serviceName(serviceName), processRunner(processRunner) {}
 
     /**
      * @brief Checks if the service is currently running.
@@ -62,6 +65,7 @@ public:
 
 private:
     QString serviceName; ///< The name of the service to manage.
+    const IProcessRunner *processRunner; ///< Pointer to process runner.
 
     /**
      * @brief Executes a systemctl command for the specified action.
@@ -75,4 +79,3 @@ private:
 };
 
 #endif // SERVICEMANAGER_H
-

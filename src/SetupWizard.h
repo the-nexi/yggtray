@@ -20,6 +20,7 @@
 #include <QInputDialog>
 #include <QMap>
 #include "ServiceManager.h" // Include the ServiceManager header
+#include "ProcessRunner.h"
 
 /**
  * @class SetupWizard
@@ -742,7 +743,8 @@ COMMIT)";
      * @param distroInfo Distribution information containing service name
      */
     void enableIp6tablesService(const DistroInfo &distroInfo) {
-        ServiceManager serviceManager(distroInfo.serviceName);
+        ProcessRunner processRunner;
+        ServiceManager serviceManager(distroInfo.serviceName, &processRunner);
         if (serviceManager.enableService()) {
             QMessageBox::information(
                 nullptr,

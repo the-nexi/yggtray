@@ -14,6 +14,7 @@ add_definitions(-DYGGTRAY_VERSION="${YGGTRAY_VERSION}")
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Network REQUIRED)
 find_package(Qt5 COMPONENTS Core LinguistTools REQUIRED)
+find_package(Qt5Test REQUIRED)
 
 set(TS_FILES
   res/i18n/yggtray_ru.ts
@@ -54,6 +55,7 @@ qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 add_executable(yggtray 
     src/tray.cpp 
     src/ServiceManager.cpp
+    src/ProcessRunner.cpp
     src/SocketManager.cpp
     src/PeerManager.cpp
     src/PeerDiscoveryDialog.cpp
@@ -152,9 +154,19 @@ pkg_check_modules(Check REQUIRED check)
 include_directories(${Check_INCLUDE_DIRS})
 link_directories(${Check_LIBRARY_DIRS})
 
-file(GLOB UNIT_TEST_SOURCES tests/unit/*.c)
-add_executable(unit_tests ${UNIT_TEST_SOURCES})
-target_link_libraries(unit_tests ${Check_LIBRARIES} pthread)
+set(UNIT_TEST_SOURCES
+    tests/unit/test_main.cpp
+    tests/unit/test_servicemanager.cpp
+    tests/unit/test_peermanager.cpp
+)
+add_executable(unit_tests
+    ${UNIT_TEST_SOURCES}
+    src/ServiceManager.cpp
+    src/ProcessRunner.cpp
+    src/PeerManager.cpp
+)
+target_include_directories(unit_tests PRIVATE ${Qt5Core_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(unit_tests ${Check_LIBRARIES} pthread Qt5::Core Qt5::Network Qt5::Test)
 
 add_test(NAME unit_tests COMMAND unit_tests)
 
