@@ -3,7 +3,10 @@
 
 START_TEST(test_hello_world)
 {
-    ck_assert_msg(1, "Hello, World! This test always passes.");
+    ck_assert_msg(
+        1,
+        "Hello, World! This test always passes."
+    );
 }
 END_TEST
 

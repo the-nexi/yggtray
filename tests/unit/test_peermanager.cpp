@@ -11,10 +11,22 @@ START_TEST(test_getHostname_basic)
 {
     printf("[PeerManager] test_getHostname_basic: Testing getHostname parsing...\n");
     PeerManager mgr(false, nullptr);
-    ck_assert_str_eq(mgr.getHostname("tls://[2001:db8::1]:1234").toUtf8().constData(), "2001:db8::1");
-    ck_assert_str_eq(mgr.getHostname("tcp://192.168.1.1:1234").toUtf8().constData(), "192.168.1.1");
-    ck_assert_str_eq(mgr.getHostname("quic://example.com:1234").toUtf8().constData(), "example.com");
-    ck_assert_str_eq(mgr.getHostname("invalidstring").toUtf8().constData(), "");
+    ck_assert_str_eq(
+        mgr.getHostname("tls://[2001:db8::1]:1234").toUtf8().constData(),
+        "2001:db8::1"
+    );
+    ck_assert_str_eq(
+        mgr.getHostname("tcp://192.168.1.1:1234").toUtf8().constData(),
+        "192.168.1.1"
+    );
+    ck_assert_str_eq(
+        mgr.getHostname("quic://example.com:1234").toUtf8().constData(),
+        "example.com"
+    );
+    ck_assert_str_eq(
+        mgr.getHostname("invalidstring").toUtf8().constData(),
+        ""
+    );
 }
 END_TEST
 
@@ -24,8 +36,14 @@ START_TEST(test_exportPeersToCsv_basic)
     printf("[PeerManager] test_exportPeersToCsv_basic: Testing exportPeersToCsv output...\n");
     PeerManager mgr(false, nullptr);
     QList<PeerData> peers;
-    PeerData p1; p1.host = "peer1"; p1.latency = 10; p1.isValid = true;
-    PeerData p2; p2.host = "peer2"; p2.latency = -1; p2.isValid = false;
+    PeerData p1;
+    p1.host = "peer1";
+    p1.latency = 10;
+    p1.isValid = true;
+    PeerData p2;
+    p2.host = "peer2";
+    p2.latency = -1;
+    p2.isValid = false;
     peers << p1 << p2;
 
     QTemporaryFile tmpFile;
@@ -78,22 +96,29 @@ START_TEST(test_peersDiscovered_signal)
     PeerManager mgr(false, nullptr);
 
     // Prepare HTML with two peer URIs
-    QByteArray html = "<html><body>"
-                      "<td>tls://[2001:db8::1]:1234</td>"
-                      "<td>tcp://192.168.1.1:1234</td>"
-                      "</body></html>";
+    QByteArray html =
+        "<html><body>"
+        "<td>tls://[2001:db8::1]:1234</td>"
+        "<td>tcp://192.168.1.1:1234</td>"
+        "</body></html>";
     DummyReply* reply = new DummyReply(html);
 
     QSignalSpy spy(&mgr, SIGNAL(peersDiscovered(QList<PeerData>)));
 
     // Call the slot directly
-    QMetaObject::invokeMethod(&mgr, "handleNetworkResponse", Qt::DirectConnection, Q_ARG(QNetworkReply*, reply));
+    QMetaObject::invokeMethod(
+        &mgr,
+        "handleNetworkResponse",
+        Qt::DirectConnection,
+        Q_ARG(QNetworkReply*, reply)
+    );
 
     // Should have emitted peersDiscovered once
     ck_assert_int_eq(spy.count(), 1);
 
     QList<QVariant> args = spy.takeFirst();
-    QList<PeerData> peers = qvariant_cast<QList<PeerData>>(args.at(0));
+    QList<PeerData> peers =
+        qvariant_cast<QList<PeerData>>(args.at(0));
     ck_assert_int_eq(peers.size(), 2);
     ck_assert(peers[0].host.contains("tls://[2001:db8::1]:1234"));
     ck_assert(peers[1].host.contains("tcp://192.168.1.1:1234"));
@@ -114,7 +139,12 @@ START_TEST(test_error_signal_network_failure)
 
     QSignalSpy spy(&mgr, SIGNAL(error(QString)));
 
-    QMetaObject::invokeMethod(&mgr, "handleNetworkResponse", Qt::DirectConnection, Q_ARG(QNetworkReply*, reply));
+    QMetaObject::invokeMethod(
+        &mgr,
+        "handleNetworkResponse",
+        Qt::DirectConnection,
+        Q_ARG(QNetworkReply*, reply)
+    );
 
     ck_assert_int_eq(spy.count(), 1);
     QList<QVariant> args = spy.takeFirst();
@@ -173,11 +203,17 @@ START_TEST(test_peersDiscovered_empty_list)
 
     QSignalSpy spy(&mgr, SIGNAL(peersDiscovered(QList<PeerData>)));
 
-    QMetaObject::invokeMethod(&mgr, "handleNetworkResponse", Qt::DirectConnection, Q_ARG(QNetworkReply*, reply));
+    QMetaObject::invokeMethod(
+        &mgr,
+        "handleNetworkResponse",
+        Qt::DirectConnection,
+        Q_ARG(QNetworkReply*, reply)
+    );
 
     ck_assert_int_eq(spy.count(), 1);
     QList<QVariant> args = spy.takeFirst();
-    QList<PeerData> peers = qvariant_cast<QList<PeerData>>(args.at(0));
+    QList<PeerData> peers =
+        qvariant_cast<QList<PeerData>>(args.at(0));
     ck_assert_int_eq(peers.size(), 0);
 
     reply->deleteLater();
@@ -196,7 +232,12 @@ START_TEST(test_error_signal_peerlist_unreachable)
 
     QSignalSpy spy(&mgr, SIGNAL(error(QString)));
 
-    QMetaObject::invokeMethod(&mgr, "handleNetworkResponse", Qt::DirectConnection, Q_ARG(QNetworkReply*, reply));
+    QMetaObject::invokeMethod(
+        &mgr,
+        "handleNetworkResponse",
+        Qt::DirectConnection,
+        Q_ARG(QNetworkReply*, reply)
+    );
 
     ck_assert_int_eq(spy.count(), 1);
     QList<QVariant> args = spy.takeFirst();

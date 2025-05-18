@@ -7,7 +7,13 @@
 START_TEST(test_isServiceRunning_active)
 {
     MockProcessRunner mock;
-    mock.setResponse("systemctl", QStringList() << "is-active" << "testservice", 0, "active", "");
+    mock.setResponse(
+        "systemctl",
+        QStringList() << "is-active" << "testservice",
+        0,
+        "active",
+        ""
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(mgr.isServiceRunning());
 }
@@ -16,7 +22,13 @@ END_TEST
 START_TEST(test_isServiceRunning_inactive)
 {
     MockProcessRunner mock;
-    mock.setResponse("systemctl", QStringList() << "is-active" << "testservice", 0, "inactive", "");
+    mock.setResponse(
+        "systemctl",
+        QStringList() << "is-active" << "testservice",
+        0,
+        "inactive",
+        ""
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(!mgr.isServiceRunning());
 }
@@ -25,7 +37,13 @@ END_TEST
 START_TEST(test_startService_success)
 {
     MockProcessRunner mock;
-    mock.setResponse("pkexec", QStringList() << "systemctl" << "start" << "testservice", 0, "", "");
+    mock.setResponse(
+        "pkexec",
+        QStringList() << "systemctl" << "start" << "testservice",
+        0,
+        "",
+        ""
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(mgr.startService());
 }
@@ -34,7 +52,13 @@ END_TEST
 START_TEST(test_startService_failure)
 {
     MockProcessRunner mock;
-    mock.setResponse("pkexec", QStringList() << "systemctl" << "start" << "testservice", 1, "", "fail");
+    mock.setResponse(
+        "pkexec",
+        QStringList() << "systemctl" << "start" << "testservice",
+        1,
+        "",
+        "fail"
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(!mgr.startService());
 }
@@ -43,7 +67,13 @@ END_TEST
 START_TEST(test_stopService_success)
 {
     MockProcessRunner mock;
-    mock.setResponse("pkexec", QStringList() << "systemctl" << "stop" << "testservice", 0, "", "");
+    mock.setResponse(
+        "pkexec",
+        QStringList() << "systemctl" << "stop" << "testservice",
+        0,
+        "",
+        ""
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(mgr.stopService());
 }
@@ -52,7 +82,13 @@ END_TEST
 START_TEST(test_stopService_failure)
 {
     MockProcessRunner mock;
-    mock.setResponse("pkexec", QStringList() << "systemctl" << "stop" << "testservice", 1, "", "fail");
+    mock.setResponse(
+        "pkexec",
+        QStringList() << "systemctl" << "stop" << "testservice",
+        1,
+        "",
+        "fail"
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(!mgr.stopService());
 }
@@ -61,7 +97,13 @@ END_TEST
 START_TEST(test_enableService_success)
 {
     MockProcessRunner mock;
-    mock.setResponse("pkexec", QStringList() << "systemctl" << "enable" << "--now" << "testservice", 0, "", "");
+    mock.setResponse(
+        "pkexec",
+        QStringList() << "systemctl" << "enable" << "--now" << "testservice",
+        0,
+        "",
+        ""
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(mgr.enableService());
 }
@@ -70,7 +112,13 @@ END_TEST
 START_TEST(test_enableService_failure)
 {
     MockProcessRunner mock;
-    mock.setResponse("pkexec", QStringList() << "systemctl" << "enable" << "--now" << "testservice", 1, "", "fail");
+    mock.setResponse(
+        "pkexec",
+        QStringList() << "systemctl" << "enable" << "--now" << "testservice",
+        1,
+        "",
+        "fail"
+    );
     ServiceManager mgr("testservice", &mock);
     ck_assert(!mgr.enableService());
 }

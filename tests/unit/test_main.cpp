@@ -18,9 +18,16 @@ int main(void)
 
     // Print summary again as last line
     if (number_failed == 0) {
-        printf("100%%: Checks: %d, Failures: 0, Errors: 0\n", total_checks);
+        printf(
+            "100%%: Checks: %d, Failures: 0, Errors: 0\n",
+            total_checks
+        );
     } else {
-        printf("FAILED: Checks: %d, Failures: %d\n", total_checks, number_failed);
+        printf(
+            "FAILED: Checks: %d, Failures: %d\n",
+            total_checks,
+            number_failed
+        );
     }
 
     return (number_failed == 0) ? 0 : 1;
