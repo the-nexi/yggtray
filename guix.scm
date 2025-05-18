@@ -43,9 +43,11 @@
              (guix git-download)
              (guix build-system cmake)
              (gnu packages autotools)
+             (gnu packages check)
              (gnu packages cmake)
              (gnu packages documentation)
              (gnu packages networking)
+             (gnu packages pkg-config)
              (gnu packages qt))
 
 
@@ -62,7 +64,6 @@
     (build-system cmake-build-system)
     (arguments
      (list
-      #:tests? #f                       ; No tests.
       #:modules '((guix build cmake-build-system)
                   (guix build qt-utils)
                   (guix build utils))
@@ -75,8 +76,9 @@
                                         #:output #$output
                                         #:inputs inputs))))))
     (native-inputs
-     (list cmake
-           doxygen))
+     (list check
+           cmake
+           pkg-config))
     (inputs
      (list qtbase-5
            qttools-5
