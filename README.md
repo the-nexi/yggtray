@@ -51,6 +51,19 @@ make -j$(nproc)
 cd .. 
 ```
 
+## Running Unit Tests
+
+After building the project, you can run the unit tests to verify everything works as expected.
+
+To build and run the tests:
+
+```
+./make.sh
+./build/unit_tests
+```
+
+All tests should pass with no failures or errors.
+
 ## AppImage building
 
 To build a portable AppImage:
@@ -71,6 +84,4 @@ This project has Doxygen documentation available, doc directory will be created 
 
 This project is licensed under the GNU General Public License v3 (GNU GPL v3).  
 
-Icons used in this application are sourced from the [Qogir-kde](https://github.com/vinceliuice/Qogir-kde) icon theme, which is also licensed under GNU GPL v3.  
-
-
+Icons used in this application are sourced from the [Qogir-kde](https://github.com/vinceliuice/Qogir-kde) icon theme, which is also licensed under GNU GPL v3.
