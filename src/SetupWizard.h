@@ -1,7 +1,7 @@
 /**
  * @file SetupWizard.h
  * @brief Enhanced setup wizard for Yggdrasil Tray with Freedesktop-compliant config property.
- * 
+ *
  * Handles automatic detection of group membership, allows users to perform
  * individual setup steps, and ensures the wizard only runs on first setup.
  */
@@ -49,7 +49,7 @@ public:
         // Perform the wizard actions
         if (!isUserInGroup("yggdrasil")) {
             QMessageBox::information(
-                nullptr, 
+                nullptr,
                 QObject::tr("Group Membership"),
                 QObject::tr("You are not in the 'yggdrasil' group. "
                           "To use this application, you must be added to this group.")
@@ -63,7 +63,7 @@ public:
                 addUserToGroup("yggdrasil");
             } else {
                 QMessageBox::warning(
-                    nullptr, 
+                    nullptr,
                     QObject::tr("Setup Incomplete"),
                     QObject::tr("You need to be in the 'yggdrasil' group "
                               "to use the application. Exiting setup.")
@@ -143,14 +143,14 @@ private:
                     return;
                 }
             }
-            
+
             // Command to generate the config file
             // Example: pkexec bash -c "yggdrasil -genconf > '/etc/yggdrasil/yggdrasil.conf'"
             QString command = QString("yggdrasil -genconf > '%1'").arg(targetPath);
-            
+
             args.clear();
             args << "bash" << "-c" << command;
-            
+
             process.start("pkexec", args);
             process.waitForFinished(-1); // Wait indefinitely
 
@@ -293,7 +293,7 @@ private:
         if (osRelease.open(QFile::ReadOnly | QFile::Text)) {
             QString content = osRelease.readAll();
             osRelease.close();
-            
+
             // Check for common distro identifiers
             if (content.contains("ID=arch") || content.contains("ID=endeavouros") || content.contains("ID=manjaro"))
                 return "arch";
@@ -304,39 +304,39 @@ private:
             if (content.contains("ID=opensuse"))
                 return "suse";
         }
-        
+
         // Fallback to command tools
         QProcess process;
         QStringList args;
-        
+
         args.clear();
         args << "-v" << "pacman";
         process.start("command", args);
         process.waitForFinished();
         if (process.exitCode() == 0)
             return "arch";
-            
+
         args.clear();
         args << "-v" << "apt-get";
         process.start("command", args);
         process.waitForFinished();
         if (process.exitCode() == 0)
             return "debian";
-            
+
         args.clear();
         args << "-v" << "dnf";
         process.start("command", args);
         process.waitForFinished();
         if (process.exitCode() == 0)
             return "fedora";
-            
+
         args.clear();
         args << "-v" << "zypper";
         process.start("command", args);
         process.waitForFinished();
         if (process.exitCode() == 0)
             return "suse";
-            
+
         return "unknown";
     }
 
@@ -347,7 +347,7 @@ private:
     DistroInfo getDistroInfo() {
         QString distro = detectDistribution();
         DistroInfo info;
-        
+
         // Distribution-specific configuration
         if (distro == "debian") {
             info.rulesPath = "/etc/iptables/rules.v6";
@@ -355,7 +355,7 @@ private:
             info.packageManager = "apt-get";
             info.packageName = "iptables-persistent";
             info.installCmd = "apt-get install -y iptables-persistent";
-        } 
+        }
         else if (distro == "fedora") {
             info.rulesPath = "/etc/sysconfig/ip6tables";
             info.serviceName = "ip6tables";
@@ -378,7 +378,7 @@ private:
             info.packageName = "iptables";
             info.installCmd = "pacman -S --noconfirm iptables";
         }
-        
+
         return info;
     }
 
@@ -391,43 +391,43 @@ private:
     bool isPackageInstalled(const QString &packageName, const QString &packageManager) {
         QProcess process;
         QStringList args;
-        
+
         if (packageManager == "pacman") {
             args.clear();
             args << "-Q" << packageName;
             process.start(packageManager, args);
             process.waitForFinished();
             return (process.exitCode() == 0);
-        } 
+        }
         else if (packageManager == "apt-get") {
             // For Ubuntu/Debian, use dpkg directly which is more reliable
             args.clear();
             args << "-s" << packageName;
             process.start("dpkg", args);
             process.waitForFinished();
-            
+
             if (process.exitCode() == 0) {
                 QString output = process.readAllStandardOutput();
                 // Look for "Status: install ok installed" in the output
                 return output.contains("Status: install ok installed");
             }
             return false;
-        } 
+        }
         else if (packageManager == "dnf") {
             args.clear();
             args << "list" << "installed" << packageName;
             process.start(packageManager, args);
             process.waitForFinished();
             return (process.exitCode() == 0);
-        } 
+        }
         else if (packageManager == "zypper") {
             args.clear();
             args << "se" << "-i" << packageName;
             process.start(packageManager, args);
             process.waitForFinished();
             return (process.exitCode() == 0);
-        } 
-        
+        }
+
         return false;  // Unknown package manager
     }
 
@@ -441,20 +441,20 @@ private:
         if (isPackageInstalled(info.packageName, info.packageManager)) {
             return true;
         }
-        
+
         // Prompt user to install the package
         QString message = QString(QObject::tr("The package '%1' is required for ip6tables configuration but is not installed. Would you like to install it now?"))
                           .arg(info.packageName);
-        
+
         QStringList options;
         options << QObject::tr("Install") << QObject::tr("Skip");
         QString choice = promptAction(message, options);
-        
+
         if (choice == QObject::tr("Install")) {
             // Use x-terminal-emulator on Debian/Ubuntu, or fallback to xterm
             QProcess termDetectProcess;
             QString terminalCmd;
-            
+
             // Try to detect the default terminal emulator for this system
             if (info.packageManager == "apt-get") {
                 // Debian/Ubuntu specific - check if x-terminal-emulator exists
@@ -464,7 +464,7 @@ private:
                     terminalCmd = "x-terminal-emulator -e";
                 }
             }
-            
+
             // Try common terminals if we don't have a specific one yet
             if (terminalCmd.isEmpty()) {
                 QStringList terminals = {"konsole", "gnome-terminal", "xfce4-terminal", "mate-terminal", "xterm"};
@@ -483,12 +483,12 @@ private:
                     }
                 }
             }
-            
+
             // If we couldn't find a terminal, fall back to xterm as a last resort
             if (terminalCmd.isEmpty()) {
                 terminalCmd = "xterm -e";
             }
-            
+
             // Create the full command with an appropriate pause at the end
             QString fullCmd;
             if (info.packageManager == "apt-get" || info.packageManager == "dnf") {
@@ -500,11 +500,11 @@ private:
                 fullCmd = QString("%1 bash -c \"echo 'Installing %2 package...'; sudo %3; echo 'Press Enter to close this window.'; read\"")
                             .arg(terminalCmd, info.packageName, info.installCmd);
             }
-            
+
             // Run the terminal with installation command
             QProcess process;
             process.startDetached(fullCmd);
-            
+
             // Give some time for package installation
             QMessageBox msgBox;
             msgBox.setWindowTitle(QObject::tr("Package Installation"));
@@ -512,11 +512,11 @@ private:
                                      "Please complete the installation in the terminal window and then click OK to continue."));
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
-            
+
             // Verify installation after user confirms
             if (isPackageInstalled(info.packageName, info.packageManager)) {
                 QMessageBox::information(
-                    nullptr, 
+                    nullptr,
                     QObject::tr("Package Installation"),
                     QString(QObject::tr("The package '%1' has been successfully installed.")).arg(info.packageName)
                 );
@@ -531,7 +531,7 @@ private:
                 return false;
             }
         }
-        
+
         return false;
     }
 
@@ -541,7 +541,7 @@ private:
      */
     bool ensureNetfilterPersistent() {
         QString distro = detectDistribution();
-        
+
         // Only needed for Debian-based distributions
         if (distro == "debian") {
             // Use dpkg to properly check if the package is installed
@@ -551,28 +551,28 @@ private:
             args << "-s" << "netfilter-persistent";
             process.start("dpkg", args);
             process.waitForFinished();
-            
+
             bool isInstalled = false;
             if (process.exitCode() == 0) {
                 QString output = process.readAllStandardOutput();
                 isInstalled = output.contains("Status: install ok installed");
             }
-            
+
             // If netfilter-persistent is not found
             if (!isInstalled) {
                 QString message = QObject::tr("The 'netfilter-persistent' package is required for ip6tables "
                                            "configuration on this system but is not installed. "
                                            "Would you like to install it now?");
-                
+
                 QStringList options;
                 options << QObject::tr("Install") << QObject::tr("Skip");
                 QString choice = promptAction(message, options);
-                
+
                 if (choice == QObject::tr("Install")) {
                     // Detect terminal similar to ensurePackageInstalled
                     QProcess termDetectProcess;
                     QString terminalCmd;
-                    
+
                     termDetectProcess.start("which", QStringList() << "x-terminal-emulator");
                     termDetectProcess.waitForFinished();
                     if (termDetectProcess.exitCode() == 0) {
@@ -593,16 +593,16 @@ private:
                         }
                         if (terminalCmd.isEmpty()) terminalCmd = "xterm -e";
                     }
-                    
+
                     QString fullCmd = QString("%1 bash -c \"echo 'Installing netfilter-persistent package...'; "
                                             "sudo apt-get install -y netfilter-persistent; "
                                             "echo 'Press Enter to close this window.'; read\"")
                                             .arg(terminalCmd);
-                    
+
                     // Open terminal for installation
                     QProcess installProcess;
                     installProcess.startDetached(fullCmd);
-                    
+
                     // Wait for user to complete installation
                     QMessageBox msgBox;
                     msgBox.setWindowTitle(QObject::tr("Package Installation"));
@@ -610,7 +610,7 @@ private:
                                             "Please complete the installation in the terminal window and then click OK to continue."));
                     msgBox.setStandardButtons(QMessageBox::Ok);
                     msgBox.exec();
-                    
+
                     // Verify installation using dpkg
                     process.start("dpkg", args);
                     process.waitForFinished();
@@ -624,7 +624,7 @@ private:
             }
             return true;
         }
-        
+
         // Not needed for non-Debian systems
         return true;
     }
@@ -634,7 +634,7 @@ private:
      */
     void configureIptables() {
         DistroInfo distroInfo = getDistroInfo();
-        
+
         // Create directory if it doesn't exist
         QDir dir = QFileInfo(distroInfo.rulesPath).dir();
         if (!dir.exists()) {
@@ -642,7 +642,7 @@ private:
             process.start("pkexec", {"mkdir", "-p", dir.path()});
             process.waitForFinished();
         }
-        
+
         // For Debian-based systems, specifically check for netfilter-persistent
         if (distroInfo.serviceName == "netfilter-persistent" && !ensureNetfilterPersistent()) {
             QMessageBox::warning(
@@ -652,7 +652,7 @@ private:
             );
             return;
         }
-        
+
         // Make sure the required package is installed
         if (!ensurePackageInstalled(distroInfo)) {
             QMessageBox::warning(
@@ -662,7 +662,7 @@ private:
             );
             return;
         }
-        
+
         QString iptablesRules =
 R"(#yggdrasil
 *filter
@@ -761,7 +761,7 @@ COMMIT)";
                 message = QObject::tr("Failed to enable and start the %1 service. "
                            "Ensure it is properly installed.").arg(distroInfo.serviceName);
             }
-            
+
             QMessageBox::critical(
                 nullptr,
                 QObject::tr("ip6tables Service"),

@@ -10,7 +10,7 @@
 #include <QThreadPool>
 #include <QRunnable>
 #include <QAtomicInt>
-#include <QMutex> 
+#include <QMutex>
 
 /**
  * @struct PeerData
@@ -32,12 +32,12 @@ Q_DECLARE_METATYPE(PeerData)
 Q_DECLARE_METATYPE(QList<PeerData>)
 
 // Forward declaration
-class PeerManager; 
+class PeerManager;
 
 /**
  * @class PeerTestRunnable
  * @brief Runnable task for testing a single peer's latency using QThreadPool.
- * 
+ *
  * @details Encapsulates the logic for pinging a single peer and reporting results.
  *          Designed to be run concurrently by a QThreadPool.
  *          Includes cancellation support via a shared QAtomicInt.
@@ -81,13 +81,13 @@ private:
 /**
  * @class PeerManager
  * @brief Manages Yggdrasil peer discovery, testing, and configuration
- * 
+ *
  * @details This class provides functionality for:
  *          - Discovering peers from public repositories
  *          - Testing peer connection quality
  *          - Updating Yggdrasil configuration with selected peers
  *          - Managing peer testing in a separate thread
- *          
+ *
  * Thread safety:
  * - Network operations run in the main thread
  * - Peer testing runs in a dedicated worker thread
@@ -122,12 +122,12 @@ public:
      * @param peer The peer to test
      */
     void testPeer(PeerData peer);
-    
+
     /**
      * @brief Resets the cancellation flag to allow new tests to run
      */
     void resetCancellation();
-    
+
     /**
      * @brief Cancels all ongoing peer tests
      */
@@ -177,7 +177,7 @@ private slots:
      * @details Parses HTML to extract peer URIs and emits peersDiscovered signal
      */
     void handleNetworkResponse(QNetworkReply* reply);
-    
+
     /**
      * @brief Handles the completion of a peer test
      * @param peer The tested peer with updated latency and validity
