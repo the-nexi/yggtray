@@ -84,7 +84,7 @@ void PeerDiscoveryDialog::setupUi() {
         tr("Host"),
         tr("Latency"),
         tr("Status"),
-        tr("Valid")
+        tr("Valid?")
     });
     peerTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     peerTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -256,7 +256,7 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
                 peerTable->setItem(i, 1, new LatencyItem(peer.latency, peer.isValid, true));
                 peerTable->setItem(i, 2, new QTableWidgetItem("-"));
                 peerTable->setItem(i, 3, new QTableWidgetItem(
-                    peer.isValid ? tr("Valid") : tr("Invalid")
+                    peer.isValid ? tr("yes") : tr("no")
                 ));
 
                 // Apply coloring to all cells

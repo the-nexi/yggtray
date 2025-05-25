@@ -306,8 +306,8 @@ Please complete the installation in the terminal window and then click OK to con
       <translation>Статус</translation>
     </message>
     <message>
-      <source>Valid</source>
-      <translation>Валидный</translation>
+      <source>Valid?</source>
+      <translation>Валидный?</translation>
     </message>
     <message>
       <source>Not Tested</source>

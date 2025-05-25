@@ -150,15 +150,15 @@ bool PeerManager::exportPeersToCsv(const QString& fileName, const QList<PeerData
     }
 
     QTextStream out(&file);
-    out << "\"Host\",\"Latency (ms)\",\"Valid\"\n";
+    out << "\"Host\",\"Latency (ms)\",\"Valid?\"\n";
 
     for (const PeerData& peer : peerList) {
         QString latencyStr;
         // Determine latency string based solely on PeerData
         if (peer.latency < -1) { // Assuming latency < -1 might indicate some other failure state, treat as Failed
-             latencyStr = tr("Failed");
+             latencyStr = "Failed";
         } else if (peer.latency == -1) { // latency == -1 indicates not tested
-             latencyStr = tr("Not Tested");
+             latencyStr = "Not Tested";
         } else { // latency >= 0 is a valid measurement
             latencyStr = QString::number(peer.latency);
         }
@@ -166,7 +166,7 @@ bool PeerManager::exportPeersToCsv(const QString& fileName, const QList<PeerData
         QString validityStr = ""; // Default to empty string
         // Determine validity string based solely on PeerData, only if tested
         if (peer.latency != -1) { // Only show validity if the peer was actually tested (latency is not -1)
-             validityStr = peer.isValid ? tr("Valid") : tr("Invalid");
+             validityStr = peer.isValid ? "yes" : "no";
         }
 
         out << "\"" << peer.host << "\","
