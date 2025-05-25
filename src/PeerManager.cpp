@@ -22,7 +22,7 @@
  */
 PeerTestRunnable::PeerTestRunnable(PeerData peer, QAtomicInt* cancelFlag, QObject *parent)
     : QObject(parent), QRunnable(), peerData(peer), cancelFlagPtr(cancelFlag) {
-    setAutoDelete(true); 
+    setAutoDelete(true);
 }
 
 /**
@@ -32,13 +32,13 @@ PeerTestRunnable::PeerTestRunnable(PeerData peer, QAtomicInt* cancelFlag, QObjec
 void PeerTestRunnable::run() {
     if (cancelFlagPtr && cancelFlagPtr->loadAcquire()) {
         qDebug() << "[PeerTestRunnable::run] Skipping test for:" << peerData.host << "(cancelled before start)";
-        emit peerTested(peerData); 
+        emit peerTested(peerData);
         return;
     }
 
     qDebug() << "[PeerTestRunnable::run] Starting test for:" << peerData.host << "on thread" << QThread::currentThreadId();
 
-    QProcess pingProcess; 
+    QProcess pingProcess;
     QStringList args;
     QString hostToPing = peerData.host;
     if (hostToPing.contains("://")) {
@@ -49,7 +49,7 @@ void PeerTestRunnable::run() {
     } else if (hostToPing.contains(':')) { // IPv4 with port
         hostToPing = hostToPing.section(':', 0, 0);
     }
-    
+
     args << "-c" << QString::number(PING_COUNT) << hostToPing;
 
     qDebug() << "[PeerTestRunnable::run] Running ping command - host:" << hostToPing << "args:" << args;
@@ -63,14 +63,14 @@ void PeerTestRunnable::run() {
             qDebug() << "[PeerTestRunnable::run] Ping cancelled for:" << peerData.host;
             if (pingProcess.state() == QProcess::Running) {
                 pingProcess.terminate();
-                if (!pingProcess.waitForFinished(500)) { 
+                if (!pingProcess.waitForFinished(500)) {
                     qDebug() << "[PeerTestRunnable::run] Ping terminate failed, killing process for:" << peerData.host;
                     pingProcess.kill();
-                    pingProcess.waitForFinished(100); 
+                    pingProcess.waitForFinished(100);
                 }
             }
-            emit peerTested(peerData); 
-            return; 
+            emit peerTested(peerData);
+            return;
         }
 
         timeoutRemaining -= CHECK_INTERVAL_MS;
@@ -84,21 +84,21 @@ void PeerTestRunnable::run() {
                     pingProcess.waitForFinished(100);
                  }
             }
-            emit peerTested(peerData); 
-            return; 
+            emit peerTested(peerData);
+            return;
         }
     }
 
     if (cancelFlagPtr && cancelFlagPtr->loadAcquire()) {
         qDebug() << "[PeerTestRunnable::run] Test cancelled after ping completion for:" << peerData.host;
-        emit peerTested(peerData); 
+        emit peerTested(peerData);
         return;
     }
 
     // Process results only if not cancelled and process finished normally
     if (pingProcess.exitStatus() == QProcess::NormalExit && pingProcess.exitCode() == 0) {
         QString output = pingProcess.readAllStandardOutput();
-        QRegularExpression rx("min/avg/max(?:/mdev)? = [\\d.]+/([\\d.]+)/[\\d.]+"); 
+        QRegularExpression rx("min/avg/max(?:/mdev)? = [\\d.]+/([\\d.]+)/[\\d.]+");
         auto match = rx.match(output);
         qDebug() << "[PeerTestRunnable::run] Ping output for:" << peerData.host << "-" << output.trimmed();
         if (match.hasMatch()) {
@@ -117,7 +117,7 @@ void PeerTestRunnable::run() {
                 }
             } else {
                 qDebug() << "[PeerTestRunnable::run] Failed to parse latency double for:" << peerData.host;
-                peerData.isValid = false; 
+                peerData.isValid = false;
                 peerData.latency = -1;
             }
         } else {
@@ -125,9 +125,9 @@ void PeerTestRunnable::run() {
             peerData.isValid = false;
         }
     } else {
-         qDebug() << "[PeerTestRunnable::run] Ping process failed or exited abnormally for:" << peerData.host 
+         qDebug() << "[PeerTestRunnable::run] Ping process failed or exited abnormally for:" << peerData.host
                   << "ExitCode:" << pingProcess.exitCode() << "ExitStatus:" << pingProcess.exitStatus();
-         peerData.isValid = false; 
+         peerData.isValid = false;
     }
 
     qDebug() << "[PeerTestRunnable::run] Emitting peerTested signal - host:" << peerData.host << "isValid:" << peerData.isValid << "latency:" << peerData.latency;
@@ -184,20 +184,20 @@ bool PeerManager::exportPeersToCsv(const QString& fileName, const QList<PeerData
  * @param debugMode Whether to enable debug output
  * @param parent Parent QObject
  */
-PeerManager::PeerManager(bool debugMode, QObject *parent) 
+PeerManager::PeerManager(bool debugMode, QObject *parent)
     : QObject(parent)
     , networkManager(new QNetworkAccessManager(this))
-    , threadPool(new QThreadPool(this)) 
-    , cancelTestsFlag(0)               
+    , threadPool(new QThreadPool(this))
+    , cancelTestsFlag(0)
     , debugMode(debugMode) {
-    
+
     qRegisterMetaType<PeerData>("PeerData");
     qRegisterMetaType<QList<PeerData>>("QList<PeerData>");
-    
+
     connect(networkManager, &QNetworkAccessManager::finished,
             this, &PeerManager::handleNetworkResponse);
-            
-    threadPool->setMaxThreadCount(5); 
+
+    threadPool->setMaxThreadCount(5);
     qDebug() << "[PeerManager] Thread pool initialized with max" << threadPool->maxThreadCount() << "threads.";
 }
 
@@ -206,10 +206,10 @@ PeerManager::PeerManager(bool debugMode, QObject *parent)
  */
 PeerManager::~PeerManager() {
     qDebug() << "[PeerManager::~PeerManager] Cleaning up...";
-    cancelTests(); 
-    threadPool->clear(); 
+    cancelTests();
+    threadPool->clear();
     qDebug() << "[PeerManager::~PeerManager] Waiting for active tests to finish...";
-    bool allFinished = threadPool->waitForDone(-1); 
+    bool allFinished = threadPool->waitForDone(-1);
     qDebug() << "[PeerManager::~PeerManager] All tests finished:" << allFinished;
 }
 
@@ -239,12 +239,12 @@ QString PeerManager::getHostname(const QString& peerUri) const {
 void PeerManager::testPeer(PeerData peer) {
     PeerTestRunnable* task = new PeerTestRunnable(peer, &cancelTestsFlag);
 
-    connect(task, &PeerTestRunnable::peerTested, 
-            this, &PeerManager::handlePeerTested, 
+    connect(task, &PeerTestRunnable::peerTested,
+            this, &PeerManager::handlePeerTested,
             Qt::QueuedConnection);
 
     qDebug() << "[PeerManager::testPeer] Submitting test task for:" << peer.host;
-    threadPool->start(task); 
+    threadPool->start(task);
 }
 
 /**
@@ -252,7 +252,7 @@ void PeerManager::testPeer(PeerData peer) {
  */
 void PeerManager::resetCancellation() {
     qDebug() << "[PeerManager::resetCancellation] Resetting cancellation flag.";
-    cancelTestsFlag.storeRelease(0); 
+    cancelTestsFlag.storeRelease(0);
 }
 
 /**
@@ -260,8 +260,8 @@ void PeerManager::resetCancellation() {
  */
 void PeerManager::cancelTests() {
     qDebug() << "[PeerManager::cancelTests] Requesting cancellation of all active tests.";
-    cancelTestsFlag.storeRelease(1); 
-    threadPool->clear(); 
+    cancelTestsFlag.storeRelease(1);
+    threadPool->clear();
     qDebug() << "[PeerManager::cancelTests] Cancellation flag set and thread pool queue cleared.";
 }
 
@@ -290,7 +290,7 @@ bool PeerManager::extractResource(const QString& resourcePath, const QString& ou
 
     // Make executable if it's the script
     if (resourcePath.endsWith(".sh")) {
-        QFile::setPermissions(outputPath, 
+        QFile::setPermissions(outputPath,
             QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner |
             QFile::ReadGroup | QFile::ExeGroup |
             QFile::ReadOther | QFile::ExeOther);
@@ -306,49 +306,49 @@ bool PeerManager::extractResource(const QString& resourcePath, const QString& ou
  */
 bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     qDebug() << "[PeerManager::updateConfig] Starting update with" << selectedPeers.count() << "peers";
-    
+
     // Count valid peers for logging
-    int totalValidPeers = std::count_if(selectedPeers.begin(), selectedPeers.end(), 
+    int totalValidPeers = std::count_if(selectedPeers.begin(), selectedPeers.end(),
                                        [](const PeerData& p) { return p.isValid; });
     qDebug() << "[PeerManager::updateConfig] Valid peers in selection:" << totalValidPeers;
-    
+
     // Sort peers by latency (lowest first)
     QList<PeerData> sortedPeers = selectedPeers;
-    std::sort(sortedPeers.begin(), sortedPeers.end(), 
+    std::sort(sortedPeers.begin(), sortedPeers.end(),
         [](const PeerData& a, const PeerData& b) {
             if (a.isValid && b.isValid) {
                 return a.latency < b.latency;
             }
             return a.isValid > b.isValid;
         });
-    
+
     // Extract update script to /tmp
     QString scriptPath = "/tmp/yggtray-update-peers.sh";
     QString policyPath = "/tmp/org.yggtray.updatepeers.policy";
-    
+
     if (!extractResource(":/scripts/update-peers.sh", scriptPath)) {
         qDebug() << "[PeerManager::updateConfig] Failed to extract update script";
         return false;
     }
-    
+
     if (!extractResource(":/polkit/org.yggtray.updatepeers.policy", policyPath)) {
         // Clean up script if policy extraction fails
         QFile::remove(scriptPath);
         qDebug() << "[PeerManager::updateConfig] Failed to extract policy file";
         return false;
     }
-    
+
     // Create temporary file with peer list
     QTemporaryFile peersFile;
     if (!peersFile.open()) {
         qDebug() << "[PeerManager::updateConfig] Failed to create temporary peers file:" << peersFile.errorString();
         return false;
     }
-    
+
     // Write peers to temporary file
     QTextStream stream(&peersFile);
     int validPeerCount = 0;
-    
+
     // First try to write only valid peers
     for (const auto& peer : sortedPeers) {
         if (peer.isValid) {
@@ -356,30 +356,30 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
             validPeerCount++;
         }
     }
-    
+
     // If no valid peers, use all peers as a fallback
     if (validPeerCount == 0) {
         qDebug() << "[PeerManager::updateConfig] Warning: No valid peers found, using all peers as fallback";
         stream.seek(0); // Reset the stream position
-        
+
         // Use all peers instead, sorted by latency if available
         for (const auto& peer : sortedPeers) {
             stream << peer.host << "\n";
         }
-        
+
         qDebug() << "[PeerManager::updateConfig] Writing" << sortedPeers.count() << "peers to config (up to" << MAX_PEERS << "will be used)";
     } else {
         qDebug() << "[PeerManager::updateConfig] Writing" << validPeerCount << "valid peers to config (up to" << MAX_PEERS << "will be used)";
     }
-    
+
     stream.flush();
-    
+
     // Debug: Read back file content to verify it's not empty
     peersFile.seek(0);
     QString fileContent = QString::fromUtf8(peersFile.readAll());
     qDebug() << "[PeerManager::updateConfig] Verifying peers file:" << (fileContent.isEmpty() ? "EMPTY!" : "Contains data");
     peersFile.seek(0);  // Reset position for the script to read
-    
+
     // Execute update script with elevated privileges
     QProcess process;
     QStringList args;
@@ -388,10 +388,10 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     } else {
         args << "sh" << scriptPath << peersFile.fileName();
     }
-    
+
     qDebug() << "[PeerManager::updateConfig] Executing update script - command: pkexec" << args;
     process.start("pkexec", args);
-    
+
     if (!process.waitForFinished(SCRIPT_TIMEOUT_MS)) {
         QString errorMsg = "Update script timed out";
         qDebug() << "[PeerManager::updateConfig] Error:" << errorMsg;
@@ -400,44 +400,44 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
         emit error(errorMsg);
         return false;
     }
-    
+
     if (process.exitCode() != 0) {
         QString stdErr = QString::fromUtf8(process.readAllStandardError());
         QString stdOut = QString::fromUtf8(process.readAllStandardOutput());
-        
+
         // Special case: If the output contains "updated successfully" but exit code is non-zero,
         // consider it a success and ignore the exit code
-        if ((stdOut.contains("updated successfully") || stdErr.contains("updated successfully")) && 
+        if ((stdOut.contains("updated successfully") || stdErr.contains("updated successfully")) &&
             process.exitCode() == 1) {
             qDebug() << "[PeerManager::updateConfig] Script exited with code 1 but reported success, treating as successful";
-            
+
             // Clean up temporary files
             QFile::remove(scriptPath);
             QFile::remove(policyPath);
             return true;
         }
-        
+
         QString errorMsg = "Update script failed with exit code " + QString::number(process.exitCode());
-        
+
         if (!stdErr.isEmpty()) {
             errorMsg += ": " + stdErr.trimmed();
         } else if (!stdOut.isEmpty()) {
             errorMsg += ": " + stdOut.trimmed();
         }
-        
+
         qDebug() << "[PeerManager::updateConfig] Error:" << errorMsg;
         QFile::remove(scriptPath);
         QFile::remove(policyPath);
         emit error(errorMsg);
         return false;
     }
-    
+
     // Log the success output
     QString output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
     if (!output.isEmpty()) {
         qDebug() << "[PeerManager::updateConfig] Script output:" << output;
     }
-    
+
     // Clean up temporary files
     QFile::remove(scriptPath);
     QFile::remove(policyPath);
@@ -452,28 +452,28 @@ void PeerManager::handleNetworkResponse(QNetworkReply* reply) {
     if (reply->error() == QNetworkReply::NoError) {
         QString html = QString::fromUtf8(reply->readAll());
         QList<PeerData> peers;
-        
+
         // Find all <td> elements containing peer URIs
         QRegularExpression tdRe("<td[^>]*>([^<]+)</td>");
         auto it = tdRe.globalMatch(html);
-        
+
         while (it.hasNext()) {
             auto match = it.next();
             QString peerUri = match.captured(1).trimmed();
             QString hostname = getHostname(peerUri);
-            
+
             if (!hostname.isEmpty()) {
                 PeerData peer;
                 peer.host = peerUri;
                 peers.append(peer);
             }
         }
-        
+
         emit peersDiscovered(peers);
     } else {
         emit error(tr("Failed to fetch peers: %1").arg(reply->errorString()));
     }
-    
+
     reply->deleteLater();
 }
 
@@ -483,5 +483,5 @@ void PeerManager::handleNetworkResponse(QNetworkReply* reply) {
  */
 void PeerManager::handlePeerTested(const PeerData& peer) {
     qDebug() << "[PeerManager::handlePeerTested] Received result for:" << peer.host << "on thread" << QThread::currentThreadId();
-    emit peerTested(peer); 
+    emit peerTested(peer);
 }
