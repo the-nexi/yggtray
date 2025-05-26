@@ -310,6 +310,14 @@ Please complete the installation in the terminal window and then click OK to con
       <translation>Валидный?</translation>
     </message>
     <message>
+      <source>yes</source>
+      <translation>да</translation>
+    </message>
+    <message>
+      <source>no</source>
+      <translation>нет</translation>
+    </message>
+    <message>
       <source>Not Tested</source>
       <translation>Не тестирован</translation>
     </message>
