@@ -106,6 +106,12 @@ public:
     ~PeerManager();
 
     /**
+     * @brief Sets the proxy to use for peer fetching network requests
+     * @param proxy The QNetworkProxy to use
+     */
+    void setPeerFetchProxy(const QNetworkProxy& proxy);
+
+    /**
      * @brief Fetches peer list from public peers repository
      */
     void fetchPeers();

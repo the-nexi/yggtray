@@ -55,6 +55,12 @@ class PeerDiscoveryDialog : public QDialog {
 public:
     explicit PeerDiscoveryDialog(bool debugMode = false, QWidget *parent = nullptr);
 
+    /**
+     * @brief Sets the proxy to use for peer fetching network requests
+     * @param proxy The QNetworkProxy to use
+     */
+    void setPeerFetchProxy(const QNetworkProxy& proxy);
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -66,6 +72,11 @@ private slots:
     void onTestClicked();
     void onApplyClicked();
     void onExportClicked();
+
+    /**
+     * @brief Show the proxy configuration dialog
+     */
+    void onProxyConfigClicked();
 
 private:
     void setupUi();
@@ -79,6 +90,7 @@ private:
     QPushButton* testButton;
     QPushButton* applyButton;
     QPushButton* exportButton;
+    QPushButton* proxyButton;
     QTableWidget* peerTable;
     QProgressBar* progressBar;
     QLabel* statusLabel;

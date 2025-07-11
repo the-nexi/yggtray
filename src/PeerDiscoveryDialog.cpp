@@ -15,6 +15,11 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QBrush>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QSpinBox>
+#include <QDialogButtonBox>
+#include <QNetworkProxy>
 
 /**
  * @brief Constructor for PeerDiscoveryDialog
@@ -30,6 +35,16 @@ PeerDiscoveryDialog::PeerDiscoveryDialog(bool debugMode, QWidget *parent)
     setWindowTitle(tr("Peer Discovery"));
     setupUi();
     setupConnections();
+}
+
+/**
+ * @brief Sets the proxy to use for peer fetching network requests
+ * @param proxy The QNetworkProxy to use
+ */
+void PeerDiscoveryDialog::setPeerFetchProxy(const QNetworkProxy& proxy) {
+    if (peerManager) {
+        peerManager->setPeerFetchProxy(proxy);
+    }
 }
 
 /**
@@ -68,6 +83,7 @@ void PeerDiscoveryDialog::setupUi() {
     testButton = new QPushButton(tr("Test"), this);
     applyButton = new QPushButton(tr("Apply"), this);
     exportButton = new QPushButton(tr("Export CSV"), this);
+    proxyButton = new QPushButton(tr("Proxy..."), this);
     testButton->setEnabled(false);
     applyButton->setEnabled(false);
     exportButton->setEnabled(false);
@@ -76,6 +92,7 @@ void PeerDiscoveryDialog::setupUi() {
     buttonLayout->addWidget(testButton);
     buttonLayout->addWidget(applyButton);
     buttonLayout->addWidget(exportButton);
+    buttonLayout->addWidget(proxyButton);
     buttonLayout->addStretch();
 
     peerTable = new QTableWidget(this);
@@ -126,6 +143,9 @@ void PeerDiscoveryDialog::setupConnections() {
 
     connect(exportButton, &QPushButton::clicked,
             this, &PeerDiscoveryDialog::onExportClicked);
+
+    connect(proxyButton, &QPushButton::clicked,
+            this, &PeerDiscoveryDialog::onProxyConfigClicked);
 }
 
 /**
@@ -403,6 +423,65 @@ void PeerDiscoveryDialog::onApplyClicked() {
         qDebug() << "Configuration update failed";
         QMessageBox::critical(this, tr("Error"),
                             tr("Failed to update configuration"));
+    }
+}
+
+/**
+ * @brief Show the proxy configuration dialog
+ */
+void PeerDiscoveryDialog::onProxyConfigClicked() {
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("Configure Proxy"));
+
+    QVBoxLayout* layout = new QVBoxLayout(&dlg);
+
+    QComboBox* typeCombo = new QComboBox(&dlg);
+    typeCombo->addItem("NoProxy", QNetworkProxy::NoProxy);
+    typeCombo->addItem("Socks5Proxy", QNetworkProxy::Socks5Proxy);
+
+    QLineEdit* hostEdit = new QLineEdit(&dlg);
+    hostEdit->setPlaceholderText(tr("Host"));
+
+    QSpinBox* portSpin = new QSpinBox(&dlg);
+    portSpin->setRange(0, 65535);
+
+    QLineEdit* userEdit = new QLineEdit(&dlg);
+    userEdit->setPlaceholderText(tr("Username"));
+
+    QLineEdit* passEdit = new QLineEdit(&dlg);
+    passEdit->setPlaceholderText(tr("Password"));
+    passEdit->setEchoMode(QLineEdit::Password);
+
+    layout->addWidget(new QLabel(tr("Proxy Type:"), &dlg));
+    layout->addWidget(typeCombo);
+    layout->addWidget(new QLabel(tr("Host:"), &dlg));
+    layout->addWidget(hostEdit);
+    layout->addWidget(new QLabel(tr("Port:"), &dlg));
+    layout->addWidget(portSpin);
+    layout->addWidget(new QLabel(tr("Username:"), &dlg));
+    layout->addWidget(userEdit);
+    layout->addWidget(new QLabel(tr("Password:"), &dlg));
+    layout->addWidget(passEdit);
+
+    QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    layout->addWidget(buttons);
+
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    if (dlg.exec() == QDialog::Accepted) {
+        QNetworkProxy::ProxyType type = static_cast<QNetworkProxy::ProxyType>(
+            typeCombo->currentData().toInt());
+        if (type == QNetworkProxy::NoProxy) {
+            setPeerFetchProxy(QNetworkProxy(QNetworkProxy::NoProxy));
+        } else {
+            QString host = hostEdit->text();
+            quint16 port = static_cast<quint16>(portSpin->value());
+            QString user = userEdit->text();
+            QString pass = passEdit->text();
+            QNetworkProxy proxy(type, host, port, user, pass);
+            setPeerFetchProxy(proxy);
+        }
     }
 }
 
