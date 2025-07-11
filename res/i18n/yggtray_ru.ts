@@ -258,6 +258,54 @@ Please complete the installation in the terminal window and then click OK to con
   <context>
     <name>PeerDiscoveryDialog</name>
     <message>
+      <source>NoProxy</source>
+      <translation>Без прокси</translation>
+    </message>
+    <message>
+      <source>Socks5Proxy</source>
+      <translation>Socks5-прокси</translation>
+    </message>
+    <message>
+      <source>Proxy...</source>
+      <translation>Прокси...</translation>
+    </message>
+    <message>
+      <source>Configure Proxy</source>
+      <translation>Настроить прокси</translation>
+    </message>
+    <message>
+      <source>Proxy Type:</source>
+      <translation>Тип прокси:</translation>
+    </message>
+    <message>
+      <source>Host</source>
+      <translation>Хост</translation>
+    </message>
+    <message>
+      <source>Username</source>
+      <translation>Имя пользователя</translation>
+    </message>
+    <message>
+      <source>Password</source>
+      <translation>Пароль</translation>
+    </message>
+    <message>
+      <source>Host:</source>
+      <translation>Хост:</translation>
+    </message>
+    <message>
+      <source>Port:</source>
+      <translation>Порт:</translation>
+    </message>
+    <message>
+      <source>Username:</source>
+      <translation>Имя пользователя:</translation>
+    </message>
+    <message>
+      <source>Password:</source>
+      <translation>Пароль:</translation>
+    </message>
+    <message>
       <source>Peer Discovery</source>
       <translation>Поиск пиров</translation>
     </message>
@@ -292,10 +340,6 @@ Please complete the installation in the terminal window and then click OK to con
     <message>
       <source>Apply</source>
       <translation>Применить</translation>
-    </message>
-    <message>
-      <source>Host</source>
-      <translation>Хост</translation>
     </message>
     <message>
       <source>Latency</source>

@@ -436,8 +436,8 @@ void PeerDiscoveryDialog::onProxyConfigClicked() {
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
 
     QComboBox* typeCombo = new QComboBox(&dlg);
-    typeCombo->addItem("NoProxy", QNetworkProxy::NoProxy);
-    typeCombo->addItem("Socks5Proxy", QNetworkProxy::Socks5Proxy);
+    typeCombo->addItem(tr("NoProxy"), QNetworkProxy::NoProxy);
+    typeCombo->addItem(tr("Socks5Proxy"), QNetworkProxy::Socks5Proxy);
 
     QLineEdit* hostEdit = new QLineEdit(&dlg);
     hostEdit->setPlaceholderText(tr("Host"));
