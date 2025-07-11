@@ -52,7 +52,7 @@ jobs:
         mkdir build_regular
         cd build_regular
         cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-        make VERBOSE=1
+        make -j$(nproc) VERBOSE=1
         tar -czvf yggtray-${{ env.VERSION }}.tar.gz yggtray
 
     # Step 5: Build AppImage
@@ -62,7 +62,7 @@ jobs:
         mkdir build_appimage
         cd build_appimage
         cmake ..
-        make appimage
+        make -j$(nproc) appimage
 
     # Step 6: Upload artifacts
     - name: Upload release artifacts
