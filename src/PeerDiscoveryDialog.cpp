@@ -21,6 +21,10 @@
 #include <QDialogButtonBox>
 #include <QNetworkProxy>
 
+// Default PeerDiscoveryDialog size.
+static const int DEFAULT_DIALOG_WIDTH  = 600;
+static const int DEFAULT_DIALOG_HEIGHT = 400;
+
 /**
  * @brief Constructor for PeerDiscoveryDialog
  * @param debugMode Whether to enable debug output
@@ -48,12 +52,11 @@ void PeerDiscoveryDialog::setPeerFetchProxy(const QNetworkProxy& proxy) {
 }
 
 /**
- * @brief Handle close event to properly cancel ongoing tests
+ * @brief Handle close event to properly cancel ongoing latency tests.
  * @param event Close event
  */
 void PeerDiscoveryDialog::closeEvent(QCloseEvent *event) {
     if (isTesting) {
-        // Ask user if they want to cancel the tests
         QMessageBox::StandardButton reply = QMessageBox::question(
             this, tr("Cancel Testing"),
             tr("Testing is in progress. Cancel and close the dialog?"),
@@ -61,7 +64,6 @@ void PeerDiscoveryDialog::closeEvent(QCloseEvent *event) {
         );
 
         if (reply == QMessageBox::Yes) {
-            // Stop the testing
             stopTesting();
             event->accept();
         } else {
@@ -120,11 +122,11 @@ void PeerDiscoveryDialog::setupUi() {
     layout->addWidget(progressBar);
     layout->addWidget(statusLabel);
 
-    resize(600, 400);
+    resize(DEFAULT_DIALOG_WIDTH, DEFAULT_DIALOG_HEIGHT);
 }
 
 /**
- * @brief Set up signal-slot connections
+ * @brief Set up signal-slot connections.
  */
 void PeerDiscoveryDialog::setupConnections() {
     connect(refreshButton, &QPushButton::clicked,
@@ -184,7 +186,7 @@ void PeerDiscoveryDialog::resetTableUI() {
 
 
 /**
- * @brief Stop ongoing peer testing
+ * @brief Stop ongoing peer latency testing.
  */
 void PeerDiscoveryDialog::stopTesting() {
     if (!isTesting) return;
@@ -206,8 +208,8 @@ void PeerDiscoveryDialog::stopTesting() {
 
 
 /**
- * @brief Handle discovered peers data
- * @param peers List of discovered peers
+ * @brief Handle discovered peers data.
+ * @param peers List of discovered peers.
  */
 void PeerDiscoveryDialog::onPeersDiscovered(const QList<PeerData>& peers) {
     peerTable->clearContents();
@@ -219,7 +221,8 @@ void PeerDiscoveryDialog::onPeersDiscovered(const QList<PeerData>& peers) {
     for (int i = 0; i < peers.count(); ++i) {
         const auto& peer = peers[i];
         peerTable->setItem(i, 0, new QTableWidgetItem(peer.host));
-        peerTable->setItem(i, 1, new LatencyItem(-1, false, false)); // Initial latency as untested
+        // Initial latency as untested
+        peerTable->setItem(i, 1, new LatencyItem(-1, false, false));
         peerTable->setItem(i, 2, new QTableWidgetItem("-"));
         peerTable->setItem(i, 3, new QTableWidgetItem(tr("Not Tested")));
     }
@@ -294,7 +297,8 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
     if (testedPeers == totalPeers) {
         // Debug: Print the state of the peerList after all tests completed
         qDebug() << "\nCurrent peerList state:";
-        for (int i = 0; i < peerList.size() && i < 50; ++i) { // Limit to 50 to avoid flooding log
+        // Limit to 50 to avoid flooding log
+        for (int i = 0; i < peerList.size() && i < 50; ++i) {
             qDebug() << "Peer in list:" << peerList[i].host
                      << "isValid:" << peerList[i].isValid
                      << "latency:" << peerList[i].latency;
