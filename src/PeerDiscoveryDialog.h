@@ -46,6 +46,19 @@ private:
 };
 
 /**
+ * @class PeerDiscoveryTableView
+ * @brief Custom QTableView to handle Yggdrasil peers.
+ */
+class PeerDiscoveryTableWidget : public QTableWidget
+{
+public:
+    PeerDiscoveryTableWidget(QWidget* parent = Q_NULLPTR);
+
+protected:
+    void keyPressEvent(QKeyEvent *event);
+};
+
+/**
  * @class PeerDiscoveryDialog
  * @brief Dialog for discovering and managing Yggdrasil peers
  */

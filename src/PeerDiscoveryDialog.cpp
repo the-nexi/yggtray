@@ -6,6 +6,8 @@
  */
 
 #include "PeerDiscoveryDialog.h"
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -97,7 +99,7 @@ void PeerDiscoveryDialog::setupUi() {
     buttonLayout->addWidget(proxyButton);
     buttonLayout->addStretch();
 
-    peerTable = new QTableWidget(this);
+    peerTable = new PeerDiscoveryTableWidget(this);
     peerTable->setColumnCount(4);
     peerTable->setHorizontalHeaderLabels({
         tr("Host"),
@@ -513,5 +515,41 @@ void PeerDiscoveryDialog::onExportClicked() {
     } else {
         QMessageBox::warning(this, tr("Export Error"),
                              tr("Failed to export peer data. See logs for details."));
+    }
+}
+
+/**
+ * @brief Custom QTableWidget constructor.
+ */
+PeerDiscoveryTableWidget::PeerDiscoveryTableWidget(QWidget* parent)
+    : QTableWidget(parent) {
+}
+
+/**
+ * @brief Handle key presses inside a custom QTableWidget.
+ *
+ * The method copies the addresses of the selected peers to the application
+ * clipboard as newline-separated list.
+ *
+ * @param event Key press event.
+ */
+void PeerDiscoveryTableWidget::keyPressEvent(QKeyEvent *event){
+    qDebug() << "[PeerDiscoveryTableWidget::keyPressEvent]" << event;
+    QModelIndexList selectedRows = selectionModel()->selectedRows();
+    // at least one entire row selected
+    if((event->type() == QKeyEvent::KeyPress)
+       && (event->matches(QKeySequence::Copy))) {
+        QStringList selectedPeers;
+        for (QModelIndex idx : selectedRows) {
+            QString peer = model()->index(idx.row(), 0).data().toString();
+            selectedPeers << peer;
+        }
+        qDebug() << "[PeerDiscoveryTableWidget::keyPressEvent]"
+                 << "Selected peers:" << selectedPeers;
+        QString clipboardText = selectedPeers.join("\n");
+        QClipboard *clipboard = QGuiApplication::clipboard();
+        clipboard->setText(clipboardText);
+    } else {
+        QTableWidget::keyPressEvent(event);
     }
 }
