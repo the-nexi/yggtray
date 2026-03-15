@@ -67,6 +67,14 @@
   <context>
     <name>QObject</name>
     <message>
+      <source>yes</source>
+      <translation>да</translation>
+    </message>
+    <message>
+      <source>no</source>
+      <translation>нет</translation>
+    </message>
+    <message>
       <source>Group Membership</source>
       <translation>Членство в группах</translation>
     </message>

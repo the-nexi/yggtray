@@ -288,9 +288,7 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
                     1,
                     new LatencyItem(peer.latency, peer.isValid, true));
                 peerTable->setItem(i, 2, new QTableWidgetItem("-"));
-                peerTable->setItem(i, 3, new QTableWidgetItem(
-                    peer.isValid ? tr("yes") : tr("no")
-                ));
+                peerTable->setItem(i, 3, new ValidityItem(peer.isValid));
 
                 // Apply coloring to all cells
                 setRowColor(i, peer.isValid, true);

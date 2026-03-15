@@ -9,6 +9,18 @@
 #include <QCloseEvent>
 #include "PeerManager.h"
 #include <QTableWidgetItem>
+#include <QTranslator>
+
+/**
+ * @brief A special class to handle validity column in the peer table.
+ */
+class ValidityItem : public QTableWidgetItem {
+public:
+    ValidityItem(bool isValid)
+        : QTableWidgetItem(isValid ? QObject::tr("yes") : QObject::tr("no")) {
+        // Do nothing.
+    }
+};
 
 // Subclass to handle latency sorting with -1 treated as slowest
 class LatencyItem : public QTableWidgetItem {
