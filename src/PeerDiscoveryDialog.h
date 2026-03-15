@@ -13,7 +13,14 @@
 // Subclass to handle latency sorting with -1 treated as slowest
 class LatencyItem : public QTableWidgetItem {
 public:
-    LatencyItem(int latency, bool isValid = false, bool isTested = false)
+    /**
+     * @brief Make a LatencyItem instance.
+     * @param latency Peer latency.  -1 means that the peer latency
+     * is not tested yet.
+     * @param isValid Peer validity.
+     * @param isTested Whether the peer latency was tested or not.
+     */
+    LatencyItem(int latency = -1, bool isValid = false, bool isTested = false)
         : QTableWidgetItem(latency >= 0 ? QString::number(latency) : QString("-")),
           m_latency(latency),
           m_isValid(isValid),

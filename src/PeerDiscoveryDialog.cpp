@@ -160,9 +160,7 @@ void PeerDiscoveryDialog::setupConnections() {
  */
 void PeerDiscoveryDialog::resetTableUI() {
     for (int i = 0; i < peerTable->rowCount(); ++i) {
-        // Reset latency using LatencyItem(-1) with proper test status
-        // parameters
-        peerTable->setItem(i, 1, new LatencyItem(-1, false, false));
+        peerTable->setItem(i, 1, new LatencyItem());
 
         QTableWidgetItem* statusItem = peerTable->item(i, 2);
          if (!statusItem) {
@@ -230,7 +228,7 @@ void PeerDiscoveryDialog::onPeersDiscovered(const QList<PeerData>& peers) {
         const auto& peer = peers[i];
         peerTable->setItem(i, 0, new QTableWidgetItem(peer.host));
         // Initial latency as untested
-        peerTable->setItem(i, 1, new LatencyItem(-1, false, false));
+        peerTable->setItem(i, 1, new LatencyItem());
         peerTable->setItem(i, 2, new QTableWidgetItem("-"));
         peerTable->setItem(i, 3, new QTableWidgetItem(tr("Not Tested")));
     }
