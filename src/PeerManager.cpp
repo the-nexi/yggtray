@@ -5,14 +5,15 @@
  * Contains implementation of methods for managing Yggdrasil peers.
  */
 
-#include "PeerManager.h"
+#include <QDebug>
+#include <QFile>
+#include <QProcess>
 #include <QRegularExpression>
 #include <QTemporaryFile>
 #include <QTextStream>
-#include <QProcess>
-#include <QDebug>
-#include <QFile>
 #include <QThreadPool>
+
+#include "PeerManager.h"
 
 /**
  * @brief Constructor for PeerTestRunnable

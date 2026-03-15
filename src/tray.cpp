@@ -8,26 +8,26 @@
  * setup wizard to handle initial configuration tasks.
  */
 
-#include <QApplication>
-#include <QSystemTrayIcon>
-#include <QMenu>
 #include <QAction>
-#include <QMessageBox>
-#include <QTimer>
+#include <QApplication>
 #include <QClipboard>
 #include <QIcon>
-#include <QStringList>
+#include <QMenu>
+#include <QMessageBox>
 #include <QPixmap>
 #include <QSharedMemory>
+#include <QStringList>
+#include <QSystemTrayIcon>
+#include <QTimer>
 #include <QTranslator>
 #include <cstdio>
 #include <iostream>
 
-#include "ServiceManager.h"
-#include "ProcessRunner.h"
-#include "SocketManager.h"
-#include "SetupWizard.h"
 #include "PeerDiscoveryDialog.h"
+#include "ProcessRunner.h"
+#include "ServiceManager.h"
+#include "SetupWizard.h"
+#include "SocketManager.h"
 
 using namespace std;
 

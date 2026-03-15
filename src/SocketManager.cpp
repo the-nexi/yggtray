@@ -5,10 +5,11 @@
  * Manages communication with a UNIX domain socket.
  */
 
-#include "SocketManager.h"
-#include <QJsonDocument>
-#include <QFile>
 #include <QDebug>
+#include <QFile>
+#include <QJsonDocument>
+
+#include "SocketManager.h"
 
 /**
  * @brief Constructs a SocketManager with multiple possible socket paths.

@@ -6,8 +6,9 @@
 #ifndef PROCESSRUNNER_H
 #define PROCESSRUNNER_H
 
-#include "IProcessRunner.h"
 #include <QObject>
+
+#include "IProcessRunner.h"
 
 /**
  * @class ProcessRunner

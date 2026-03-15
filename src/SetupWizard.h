@@ -10,18 +10,19 @@
 #ifndef SETUPWIZARD_H
 #define SETUPWIZARD_H
 
-#include <QString>
 #include <QDir>
 #include <QFile>
-#include <QStandardPaths>
-#include <QTextStream>
-#include <QTranslator>
-#include <QProcess>
-#include <QMessageBox>
 #include <QInputDialog>
 #include <QMap>
-#include "ServiceManager.h" // Include the ServiceManager header
+#include <QMessageBox>
+#include <QProcess>
+#include <QStandardPaths>
+#include <QString>
+#include <QTextStream>
+#include <QTranslator>
+
 #include "ProcessRunner.h"
+#include "ServiceManager.h"
 
 /**
  * @class SetupWizard

@@ -1,15 +1,16 @@
 #ifndef PEERDISCOVERYDIALOG_H
 #define PEERDISCOVERYDIALOG_H
 
-#include <QDialog>
-#include <QTableWidget>
-#include <QProgressBar>
-#include <QLabel>
-#include <QPushButton>
 #include <QCloseEvent>
-#include "PeerManager.h"
+#include <QDialog>
+#include <QLabel>
+#include <QProgressBar>
+#include <QPushButton>
+#include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QTranslator>
+
+#include "PeerManager.h"
 
 /**
  * @brief A special class to handle validity column in the peer table.

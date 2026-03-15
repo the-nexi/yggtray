@@ -5,8 +5,9 @@
  * Manages interactions with system services via systemctl commands.
  */
 
-#include "ServiceManager.h"
 #include <QDebug>
+
+#include "ServiceManager.h"
 
 /**
  * @brief Checks if the service is currently running.

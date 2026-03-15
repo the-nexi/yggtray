@@ -10,6 +10,8 @@
 
 #include <QString>
 
+#include "IProcessRunner.h"
+
 /**
  * @class ServiceManager
  * @brief Handles system service management using systemctl commands.
@@ -17,7 +19,6 @@
  * This class provides methods to check the status of a service, start
  * a service, stop a service, and enable a service using system commands.
  */
-#include "IProcessRunner.h"
 
 class ServiceManager {
 public:

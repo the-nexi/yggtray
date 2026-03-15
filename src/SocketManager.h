@@ -1,10 +1,10 @@
 #ifndef SOCKETMANAGER_H
 #define SOCKETMANAGER_H
 
-#include <QString>
-#include <QStringList>
 #include <QJsonObject>
 #include <QLocalSocket>
+#include <QString>
+#include <QStringList>
 
 /**
  * @class SocketManager

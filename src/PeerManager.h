@@ -1,16 +1,16 @@
 #ifndef PEERMANAGER_H
 #define PEERMANAGER_H
 
-#include <QObject>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QProcess>
+#include <QAtomicInt>
 #include <QElapsedTimer>
 #include <QList>
-#include <QThreadPool>
-#include <QRunnable>
-#include <QAtomicInt>
 #include <QMutex>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QObject>
+#include <QProcess>
+#include <QRunnable>
+#include <QThreadPool>
 
 /**
  * @struct PeerData

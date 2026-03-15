@@ -3,8 +3,9 @@
  * @brief Implementation of ProcessRunner using QProcess.
  */
 
-#include "ProcessRunner.h"
 #include <QProcess>
+
+#include "ProcessRunner.h"
 
 int ProcessRunner::run(const QString &program,
                        const QStringList &arguments,

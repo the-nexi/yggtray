@@ -5,23 +5,24 @@
  * Contains implementation of dialog for discovering and managing Yggdrasil peers.
  */
 
-#include "PeerDiscoveryDialog.h"
-#include <QClipboard>
-#include <QGuiApplication>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QHeaderView>
-#include <QMessageBox>
-#include <QTimer>
-#include <QDebug>
-#include <QFileDialog>
 #include <QBrush>
+#include <QClipboard>
 #include <QComboBox>
-#include <QLineEdit>
-#include <QSpinBox>
+#include <QDebug>
 #include <QDialogButtonBox>
+#include <QFileDialog>
+#include <QGuiApplication>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QLineEdit>
+#include <QMessageBox>
 #include <QNetworkProxy>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTimer>
+#include <QVBoxLayout>
+
+#include "PeerDiscoveryDialog.h"
 
 // Default PeerDiscoveryDialog size.
 static const int DEFAULT_DIALOG_WIDTH  = 600;
