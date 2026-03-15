@@ -1,6 +1,7 @@
 /**
  * @file SetupWizard.h
- * @brief Enhanced setup wizard for Yggdrasil Tray with Freedesktop-compliant config property.
+ * @brief Enhanced setup wizard for Yggdrasil Tray with
+ * Freedesktop-compliant config property.
  *
  * Handles automatic detection of group membership, allows users to perform
  * individual setup steps, and ensures the wizard only runs on first setup.
@@ -39,7 +40,8 @@ public:
 
     /**
      * @brief Runs the setup wizard if not already completed.
-     * @param forceRun If true, the wizard runs regardless of the config file property.
+     * @param forceRun If true, the wizard runs regardless of the config file
+     * property.
      */
     void run(bool forceRun = false) {
         if (!forceRun && isSetupComplete()) {
@@ -51,22 +53,24 @@ public:
             QMessageBox::information(
                 nullptr,
                 QObject::tr("Group Membership"),
-                QObject::tr("You are not in the 'yggdrasil' group. "
-                          "To use this application, you must be added to this group.")
-            );
+                QObject::tr(
+                    "You are not in the 'yggdrasil' group."
+                    " To use this application, you must be added to this group."));
 
-            QString choice = promptAction(
-                QObject::tr("Would you like to add yourself to the 'yggdrasil' group now?"),
-                {QObject::tr("Add Me"), QObject::tr("Skip")}
-            );
+            QString choice
+                = promptAction(
+                    QObject::tr(
+                        "Would you like to add yourself"
+                        " to the 'yggdrasil' group now?"),
+                    { QObject::tr("Add Me"), QObject::tr("Skip") });
             if (choice == QObject::tr("Add Me")) {
                 addUserToGroup("yggdrasil");
             } else {
                 QMessageBox::warning(
                     nullptr,
                     QObject::tr("Setup Incomplete"),
-                    QObject::tr("You need to be in the 'yggdrasil' group "
-                              "to use the application. Exiting setup.")
+                    QObject::tr("You need to be in the 'yggdrasil' group"
+                                " to use the application. Exiting setup.")
                 );
                 return;
             }
@@ -89,10 +93,12 @@ public:
 
 private:
     /**
-     * @brief Ensures the main Yggdrasil configuration file (yggdrasil.conf) exists.
+     * @brief Ensures the main Yggdrasil configuration file
+     * (yggdrasil.conf) exists.
      *
-     * Checks common locations (/etc/yggdrasil/yggdrasil.conf or /etc/yggdrasil.conf)
-     * and creates an empty file if it's missing, using pkexec for permissions.
+     * Checks common locations ("/etc/yggdrasil/yggdrasil.conf" or
+     * "/etc/yggdrasil.conf") and creates an empty file if it's missing, using
+     * pkexec for permissions.
      */
     void ensureYggdrasilConfigExists() {
         QString path1 = "/etc/yggdrasil/yggdrasil.conf";
@@ -117,11 +123,13 @@ private:
         }
 
         QMessageBox::StandardButton reply;
-        reply = QMessageBox::question(nullptr, QObject::tr("Yggdrasil Configuration"),
-                                      QString(QObject::tr("The Yggdrasil configuration file (%1) was not found. "
-                                                        "Would you like to generate it now using 'yggdrasil -genconf'?"))
-                                      .arg(targetPath),
-                                      QMessageBox::Yes|QMessageBox::No);
+        reply = QMessageBox::question(
+            nullptr,
+            QObject::tr("Yggdrasil Configuration"),
+            QString(QObject::tr("The Yggdrasil configuration file (%1) was not found. "
+                                "Would you like to generate it now using 'yggdrasil -genconf'?"))
+            .arg(targetPath),
+            QMessageBox::Yes | QMessageBox::No);
 
         if (reply == QMessageBox::Yes) {
             QProcess process;
@@ -136,17 +144,24 @@ private:
                 mkdirProcess.start("pkexec", args);
                 mkdirProcess.waitForFinished(-1); // Wait for mkdir to complete
                 if (mkdirProcess.exitCode() != 0) {
-                    QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
-                                           QString(QObject::tr("Failed to create directory %1. "
-                                                             "Error: %2. Exit code: %3"))
-                                           .arg(parentDir.absolutePath(), mkdirProcess.errorString(), QString::number(mkdirProcess.exitCode())));
+                    QMessageBox::warning(
+                        nullptr,
+                        QObject::tr("Yggdrasil Configuration"),
+                        QString(
+                            QObject::tr("Failed to create directory %1. "
+                                        "Error: %2. Exit code: %3"))
+                        .arg(parentDir.absolutePath(),
+                             mkdirProcess.errorString(),
+                             QString::number(mkdirProcess.exitCode())));
                     return;
                 }
             }
 
             // Command to generate the config file
-            // Example: pkexec bash -c "yggdrasil -genconf > '/etc/yggdrasil/yggdrasil.conf'"
-            QString command = QString("yggdrasil -genconf > '%1'").arg(targetPath);
+            // Example:
+            //   pkexec bash -c "yggdrasil -genconf > '/etc/yggdrasil/yggdrasil.conf'"
+            QString command
+                = QString("yggdrasil -genconf > '%1'").arg(targetPath);
 
             args.clear();
             args << "bash" << "-c" << command;
@@ -155,30 +170,44 @@ private:
             process.waitForFinished(-1); // Wait indefinitely
 
             if (process.exitCode() == 0 && QFile::exists(targetPath)) {
-                // Additionally, check if the file is not empty, as genconf should produce content.
+                // Additionally, check if the file is not empty, as genconf
+                // should produce content.
                 QFile genFile(targetPath);
                 if (genFile.open(QIODevice::ReadOnly)) {
                     bool isEmpty = genFile.size() == 0;
                     genFile.close();
                     if (isEmpty) {
-                         QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
-                                       QString(QObject::tr("Yggdrasil configuration file was created at %1, but it is empty. 'yggdrasil -genconf' might have failed silently or yggdrasil command is not in PATH for root."))
+                        // TODO: Simplify the code to make it more concise.
+                         QMessageBox::warning(
+                             nullptr,
+                             QObject::tr("Yggdrasil Configuration"),
+                             QString(QObject::tr(
+                                         "Yggdrasil configuration file was created at %1, but it is empty."
+                                         " 'yggdrasil -genconf' might have failed silently or yggdrasil command is not in PATH for root."))
                                        .arg(targetPath));
                     } else {
-                        QMessageBox::information(nullptr, QObject::tr("Yggdrasil Configuration"),
-                                                 QString(QObject::tr("Yggdrasil configuration file generated successfully at %1.")).arg(targetPath));
+                        QMessageBox::information(
+                            nullptr,
+                            QObject::tr("Yggdrasil Configuration"),
+                            QString(QObject::tr(
+                                        "Yggdrasil configuration file generated successfully at %1."))
+                            .arg(targetPath));
                     }
                 } else {
-                     QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
-                                       QString(QObject::tr("Yggdrasil configuration file was created at %1, but could not be read to verify content."))
-                                       .arg(targetPath));
+                     QMessageBox::warning(
+                         nullptr,
+                         QObject::tr("Yggdrasil Configuration"),
+                         QString(QObject::tr("Yggdrasil configuration file was created at %1, but could not be read to verify content."))
+                         .arg(targetPath));
                 }
             } else {
-                QMessageBox::warning(nullptr, QObject::tr("Yggdrasil Configuration"),
-                                       QString(QObject::tr("Failed to generate Yggdrasil configuration file at %1. "
-                                                         "Command was: pkexec bash -c \"%2\". Error: %3. Exit code: %4. "
-                                                         "Ensure 'yggdrasil' is in the system PATH and pkexec is configured."))
-                                       .arg(targetPath, command, process.errorString(), QString::number(process.exitCode())));
+                QMessageBox::warning(
+                    nullptr,
+                    QObject::tr("Yggdrasil Configuration"),
+                    QString(QObject::tr("Failed to generate Yggdrasil configuration file at %1. "
+                                        "Command was: pkexec bash -c \"%2\". Error: %3. Exit code: %4. "
+                                        "Ensure 'yggdrasil' is in the system PATH and pkexec is configured."))
+                    .arg(targetPath, command, process.errorString(), QString::number(process.exitCode())));
             }
         }
     }
@@ -225,7 +254,10 @@ private:
             out << "setup_complete=true\n";
             configFile.close();
         } else {
-            QMessageBox::warning(nullptr, QObject::tr("Setup Wizard"), QObject::tr("Failed to mark the setup as complete."));
+            QMessageBox::warning(
+                nullptr,
+                QObject::tr("Setup Wizard"),
+                QObject::tr("Failed to mark the setup as complete."));
         }
     }
 
@@ -237,7 +269,14 @@ private:
      */
     QString promptAction(const QString &message, const QStringList &options) {
         bool ok;
-        QString choice = QInputDialog::getItem(nullptr, QObject::tr("Setup Wizard"), message, options, 0, false, &ok);
+        QString choice = QInputDialog::getItem(
+            nullptr,
+            QObject::tr("Setup Wizard"),
+            message,
+            options,
+            0,
+            false,
+            &ok);
         return ok ? choice : QString();
     }
 
@@ -268,17 +307,19 @@ private:
             QMessageBox::information(
                 nullptr,
                 QObject::tr("Group Addition"),
-                QString(QObject::tr("You have been added to the '%1' group. "
-                                  "Please log out and log back in for the changes to take effect."))
-                    .arg(groupName)
+                QString(QObject::tr(
+                            "You have been added to the '%1' group. "
+                            "Please log out and log back in for the changes to take effect."))
+                .arg(groupName)
             );
         } else {
             QMessageBox::critical(
                 nullptr,
                 QObject::tr("Group Addition"),
-                QString(QObject::tr("Failed to add you to the '%1' group. "
-                                  "Ensure you have the necessary permissions."))
-                    .arg(groupName)
+                QString(QObject::tr(
+                            "Failed to add you to the '%1' group. "
+                            "Ensure you have the necessary permissions."))
+                .arg(groupName)
             );
         }
     }
@@ -295,9 +336,13 @@ private:
             osRelease.close();
 
             // Check for common distro identifiers
-            if (content.contains("ID=arch") || content.contains("ID=endeavouros") || content.contains("ID=manjaro"))
+            if (content.contains("ID=arch")
+                || content.contains("ID=endeavouros")
+                || content.contains("ID=manjaro"))
                 return "arch";
-            if (content.contains("ID=ubuntu") || content.contains("ID=debian") || content.contains("ID=linuxmint"))
+            if (content.contains("ID=ubuntu")
+                || content.contains("ID=debian")
+                || content.contains("ID=linuxmint"))
                 return "debian";
             if (content.contains("ID=fedora"))
                 return "fedora";
@@ -342,7 +387,8 @@ private:
 
     /**
      * @brief Gets information about ip6tables for the current distribution
-     * @return A DistroInfo struct with paths and commands for the current distribution
+     * @return A DistroInfo struct with paths and commands for
+     * the current distribution
      */
     DistroInfo getDistroInfo() {
         QString distro = detectDistribution();
@@ -388,7 +434,8 @@ private:
      * @param packageManager The package manager to use
      * @return True if the package is installed
      */
-    bool isPackageInstalled(const QString &packageName, const QString &packageManager) {
+    bool isPackageInstalled(const QString &packageName,
+                            const QString &packageManager) {
         QProcess process;
         QStringList args;
 
@@ -443,8 +490,10 @@ private:
         }
 
         // Prompt user to install the package
-        QString message = QString(QObject::tr("The package '%1' is required for ip6tables configuration but is not installed. Would you like to install it now?"))
-                          .arg(info.packageName);
+        QString message
+            = QString(QObject::tr(
+                          "The package '%1' is required for ip6tables configuration but is not installed. Would you like to install it now?"))
+            .arg(info.packageName);
 
         QStringList options;
         options << QObject::tr("Install") << QObject::tr("Skip");
@@ -467,7 +516,13 @@ private:
 
             // Try common terminals if we don't have a specific one yet
             if (terminalCmd.isEmpty()) {
-                QStringList terminals = {"konsole", "gnome-terminal", "xfce4-terminal", "mate-terminal", "xterm"};
+                QStringList terminals = {
+                    "konsole",
+                    "gnome-terminal",
+                    "xfce4-terminal",
+                    "mate-terminal",
+                    "xterm"
+                };
                 for (const auto& term : terminals) {
                     termDetectProcess.start("which", QStringList() << term);
                     termDetectProcess.waitForFinished();
@@ -484,7 +539,8 @@ private:
                 }
             }
 
-            // If we couldn't find a terminal, fall back to xterm as a last resort
+            // If we couldn't find a terminal, fall back to xterm as
+            // a last resort
             if (terminalCmd.isEmpty()) {
                 terminalCmd = "xterm -e";
             }
@@ -493,12 +549,14 @@ private:
             QString fullCmd;
             if (info.packageManager == "apt-get" || info.packageManager == "dnf") {
                 // These package managers need sudo
-                fullCmd = QString("%1 bash -c \"echo 'Installing %2 package...'; sudo %3; echo 'Press Enter to close this window.'; read\"")
-                            .arg(terminalCmd, info.packageName, info.installCmd);
+                fullCmd = QString(
+                    "%1 bash -c \"echo 'Installing %2 package...'; sudo %3; echo 'Press Enter to close this window.'; read\"")
+                    .arg(terminalCmd, info.packageName, info.installCmd);
             } else {
                 // Others like pacman need to be run directly with sudo
-                fullCmd = QString("%1 bash -c \"echo 'Installing %2 package...'; sudo %3; echo 'Press Enter to close this window.'; read\"")
-                            .arg(terminalCmd, info.packageName, info.installCmd);
+                fullCmd = QString(
+                    "%1 bash -c \"echo 'Installing %2 package...'; sudo %3; echo 'Press Enter to close this window.'; read\"")
+                    .arg(terminalCmd, info.packageName, info.installCmd);
             }
 
             // Run the terminal with installation command
@@ -508,8 +566,10 @@ private:
             // Give some time for package installation
             QMessageBox msgBox;
             msgBox.setWindowTitle(QObject::tr("Package Installation"));
-            msgBox.setText(QObject::tr("The package installation window has been opened.\n\n"
-                                     "Please complete the installation in the terminal window and then click OK to continue."));
+            msgBox.setText(
+                QObject::tr(
+                    "The package installation window has been opened.\n\n"
+                    "Please complete the installation in the terminal window and then click OK to continue."));
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
 
@@ -518,15 +578,18 @@ private:
                 QMessageBox::information(
                     nullptr,
                     QObject::tr("Package Installation"),
-                    QString(QObject::tr("The package '%1' has been successfully installed.")).arg(info.packageName)
+                    QString(QObject::tr(
+                                "The package '%1' has been successfully installed."))
+                    .arg(info.packageName)
                 );
                 return true;
             } else {
                 QMessageBox::critical(
                     nullptr,
                     QObject::tr("Package Installation"),
-                    QString(QObject::tr("Failed to install package '%1' or the installation could not be verified. "
-                                      "You may need to install it manually.")).arg(info.packageName)
+                    QString(QObject::tr(
+                                "Failed to install package '%1' or the installation could not be verified. "
+                                "You may need to install it manually.")).arg(info.packageName)
                 );
                 return false;
             }
@@ -536,7 +599,8 @@ private:
     }
 
     /**
-     * @brief Specifically check and install netfilter-persistent on Debian-based systems
+     * @brief Specifically check and install netfilter-persistent on
+     * Debian-based systems
      * @return True if netfilter-persistent is installed or not needed
      */
     bool ensureNetfilterPersistent() {
@@ -560,9 +624,11 @@ private:
 
             // If netfilter-persistent is not found
             if (!isInstalled) {
-                QString message = QObject::tr("The 'netfilter-persistent' package is required for ip6tables "
-                                           "configuration on this system but is not installed. "
-                                           "Would you like to install it now?");
+                QString message
+                    = QObject::tr(
+                        "The 'netfilter-persistent' package is required for ip6tables "
+                        "configuration on this system but is not installed. "
+                        "Would you like to install it now?");
 
                 QStringList options;
                 options << QObject::tr("Install") << QObject::tr("Skip");
@@ -578,7 +644,13 @@ private:
                     if (termDetectProcess.exitCode() == 0) {
                         terminalCmd = "x-terminal-emulator -e";
                     } else {
-                        QStringList terminals = {"konsole", "gnome-terminal", "xfce4-terminal", "mate-terminal", "xterm"};
+                        QStringList terminals = {
+                            "konsole",
+                            "gnome-terminal",
+                            "xfce4-terminal",
+                            "mate-terminal",
+                            "xterm"
+                        };
                         for (const auto& term : terminals) {
                             termDetectProcess.start("which", QStringList() << term);
                             termDetectProcess.waitForFinished();
@@ -594,10 +666,12 @@ private:
                         if (terminalCmd.isEmpty()) terminalCmd = "xterm -e";
                     }
 
-                    QString fullCmd = QString("%1 bash -c \"echo 'Installing netfilter-persistent package...'; "
-                                            "sudo apt-get install -y netfilter-persistent; "
-                                            "echo 'Press Enter to close this window.'; read\"")
-                                            .arg(terminalCmd);
+                    QString fullCmd
+                        = QString(
+                            "%1 bash -c \"echo 'Installing netfilter-persistent package...'; "
+                            "sudo apt-get install -y netfilter-persistent; "
+                            "echo 'Press Enter to close this window.'; read\"")
+                        .arg(terminalCmd);
 
                     // Open terminal for installation
                     QProcess installProcess;
@@ -606,8 +680,10 @@ private:
                     // Wait for user to complete installation
                     QMessageBox msgBox;
                     msgBox.setWindowTitle(QObject::tr("Package Installation"));
-                    msgBox.setText(QObject::tr("The netfilter-persistent installation window has been opened.\n\n"
-                                            "Please complete the installation in the terminal window and then click OK to continue."));
+                    msgBox.setText(
+                        QObject::tr(
+                            "The netfilter-persistent installation window has been opened.\n\n"
+                            "Please complete the installation in the terminal window and then click OK to continue."));
                     msgBox.setStandardButtons(QMessageBox::Ok);
                     msgBox.exec();
 
@@ -644,11 +720,13 @@ private:
         }
 
         // For Debian-based systems, specifically check for netfilter-persistent
-        if (distroInfo.serviceName == "netfilter-persistent" && !ensureNetfilterPersistent()) {
+        if ((distroInfo.serviceName == "netfilter-persistent")
+            && (! ensureNetfilterPersistent())) {
             QMessageBox::warning(
                 nullptr,
                 QObject::tr("ip6tables Configuration"),
-                QObject::tr("Cannot configure ip6tables without the netfilter-persistent package.")
+                QObject::tr(
+                    "Cannot configure ip6tables without the netfilter-persistent package.")
             );
             return;
         }
@@ -678,8 +756,9 @@ COMMIT)";
             QString choice = promptAction(
                 QObject::tr("The ip6tables configuration file already exists. "
                           "What would you like to do?"),
-                {QObject::tr("Overwrite"), QObject::tr("Append"), QObject::tr("Don't change the configuration file")}
-            );
+                { QObject::tr("Overwrite"),
+                  QObject::tr("Append"),
+                  QObject::tr("Don't change the configuration file") });
             if (choice == QObject::tr("Overwrite")) {
                 writeToFile(distroInfo.rulesPath, iptablesRules, false);
             } else if (choice == QObject::tr("Append")) {
@@ -688,8 +767,8 @@ COMMIT)";
                 QMessageBox::information(
                     nullptr,
                     "ip6tables",
-                    QObject::tr("No changes were made to the ip6tables configuration.")
-                );
+                    QObject::tr(
+                        "No changes were made to the ip6tables configuration."));
                 return;
             }
         } else {
@@ -700,7 +779,8 @@ COMMIT)";
     }
 
     /**
-     * @brief Writes rules to the ip6tables configuration file with elevated permissions.
+     * @brief Writes rules to the ip6tables configuration file with
+     * elevated permissions.
      * @param filePath The path to the configuration file.
      * @param rules The ip6tables rules to write.
      * @param append If true, appends to the file; otherwise, overwrites it.
@@ -715,7 +795,10 @@ COMMIT)";
             out << rules << "\n";
             tempFile.close();
         } else {
-            QMessageBox::critical(nullptr, "ip6tables", QObject::tr("Failed to create a temporary file for ip6tables rules."));
+            QMessageBox::critical(
+                nullptr,
+                "ip6tables",
+                QObject::tr("Failed to create a temporary file for ip6tables rules."));
             return;
         }
 
@@ -730,9 +813,16 @@ COMMIT)";
         process.waitForFinished();
 
         if (process.exitCode() == 0) {
-            QMessageBox::information(nullptr, "ip6tables", append ? QObject::tr("Rules have been appended to the configuration.") : QObject::tr("Rules have been written to the configuration."));
+            QMessageBox::information(
+                nullptr,
+                "ip6tables",
+                append ? QObject::tr("Rules have been appended to the configuration.")
+                : QObject::tr("Rules have been written to the configuration."));
         } else {
-            QMessageBox::critical(nullptr, "ip6tables", QObject::tr("Failed to write to the ip6tables configuration file. Ensure you have the necessary permissions."));
+            QMessageBox::critical(
+                nullptr,
+                "ip6tables",
+                QObject::tr("Failed to write to the ip6tables configuration file. Ensure you have the necessary permissions."));
         }
 
         QFile::remove(tempFilePath); // Clean up the temporary file
@@ -755,11 +845,15 @@ COMMIT)";
         } else {
             QString message;
             if (distroInfo.serviceName == "netfilter-persistent") {
-                message = QObject::tr("Failed to enable the netfilter-persistent service. "
-                           "Try running 'sudo netfilter-persistent save' and 'sudo netfilter-persistent reload' manually.");
+                message
+                    = QObject::tr(
+                        "Failed to enable the netfilter-persistent service. "
+                        "Try running 'sudo netfilter-persistent save' and 'sudo netfilter-persistent reload' manually.");
             } else {
-                message = QObject::tr("Failed to enable and start the %1 service. "
-                           "Ensure it is properly installed.").arg(distroInfo.serviceName);
+                message
+                    = QObject::tr(
+                        "Failed to enable and start the %1 service. "
+                        "Ensure it is properly installed.").arg(distroInfo.serviceName);
             }
 
             QMessageBox::critical(

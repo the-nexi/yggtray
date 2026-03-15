@@ -21,7 +21,8 @@ public:
     /**
      * @brief Sends a request to the socket and receives the response.
      * @param request A QJsonObject containing the request data.
-     * @return A QJsonObject containing the response, or an empty object if an error occurred.
+     * @return A QJsonObject containing the response, or an empty object
+     * if an error occurred.
      */
     QJsonObject sendRequest(const QJsonObject &request);
 

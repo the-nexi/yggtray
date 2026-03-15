@@ -20,7 +20,8 @@ public:
           m_isTested(isTested)
     {
         if (m_isTested) {
-            QColor backgroundColor = m_isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
+            QColor backgroundColor
+                = m_isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
             setData(Qt::BackgroundRole, backgroundColor);
             setData(Qt::ForegroundRole, QColor(0, 0, 0));
         }
@@ -28,7 +29,8 @@ public:
 
     bool operator<(const QTableWidgetItem &other) const override {
         const LatencyItem* otherItem = dynamic_cast<const LatencyItem*>(&other);
-        int otherLatency = otherItem ? otherItem->m_latency : other.text().toInt();
+        int otherLatency
+            = otherItem ? otherItem->m_latency : other.text().toInt();
 
         if (m_latency < 0 && otherLatency >= 0) return false;
         if (otherLatency < 0 && m_latency >= 0) return true;
@@ -66,7 +68,8 @@ class PeerDiscoveryDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit PeerDiscoveryDialog(bool debugMode = false, QWidget *parent = nullptr);
+    explicit PeerDiscoveryDialog(bool debugMode = false,
+                                 QWidget *parent = nullptr);
 
     /**
      * @brief Sets the proxy to use for peer fetching network requests

@@ -107,8 +107,11 @@ void PeerDiscoveryDialog::setupUi() {
         tr("Status"),
         tr("Valid?")
     });
-    peerTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    peerTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    peerTable->horizontalHeader()->setSectionResizeMode(
+        QHeaderView::ResizeToContents);
+    peerTable->horizontalHeader()->setSectionResizeMode(
+        0,
+        QHeaderView::Stretch);
     peerTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     peerTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     peerTable->setSortingEnabled(true); // Enable built-in sorting
@@ -157,7 +160,8 @@ void PeerDiscoveryDialog::setupConnections() {
  */
 void PeerDiscoveryDialog::resetTableUI() {
     for (int i = 0; i < peerTable->rowCount(); ++i) {
-        // Reset latency using LatencyItem(-1) with proper test status parameters
+        // Reset latency using LatencyItem(-1) with proper test status
+        // parameters
         peerTable->setItem(i, 1, new LatencyItem(-1, false, false));
 
         QTableWidgetItem* statusItem = peerTable->item(i, 2);
@@ -191,7 +195,9 @@ void PeerDiscoveryDialog::resetTableUI() {
  * @brief Stop ongoing peer latency testing.
  */
 void PeerDiscoveryDialog::stopTesting() {
-    if (!isTesting) return;
+    if (! isTesting) {
+        return;
+    }
 
     peerManager->cancelTests();
 
@@ -243,7 +249,8 @@ void PeerDiscoveryDialog::onPeersDiscovered(const QList<PeerData>& peers) {
 void PeerDiscoveryDialog::setRowColor(int row, bool isValid, bool isTested) {
     if (!isTested) return;
 
-    QColor backgroundColor = isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
+    QColor backgroundColor
+        = isValid ? QColor(220, 255, 220) : QColor(255, 220, 220);
     QColor foregroundColor = QColor(0, 0, 0);
 
     for (int col = 0; col < peerTable->columnCount(); ++col) {
@@ -278,7 +285,10 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
 
                 // Update all cells in the row
                 peerTable->setItem(i, 0, new QTableWidgetItem(peer.host));
-                peerTable->setItem(i, 1, new LatencyItem(peer.latency, peer.isValid, true));
+                peerTable->setItem(
+                    i,
+                    1,
+                    new LatencyItem(peer.latency, peer.isValid, true));
                 peerTable->setItem(i, 2, new QTableWidgetItem("-"));
                 peerTable->setItem(i, 3, new QTableWidgetItem(
                     peer.isValid ? tr("yes") : tr("no")
@@ -294,7 +304,9 @@ void PeerDiscoveryDialog::onPeerTested(const PeerData& peer) {
         }
     }
 
-    statusLabel->setText(tr("Testing peers: %1/%2").arg(testedPeers).arg(totalPeers));
+    statusLabel->setText(tr("Testing peers: %1/%2")
+                         .arg(testedPeers)
+                         .arg(totalPeers));
 
     if (testedPeers == totalPeers) {
         // Debug: Print the state of the peerList after all tests completed
@@ -365,7 +377,9 @@ void PeerDiscoveryDialog::onTestClicked() {
 
     peerManager->resetCancellation();
 
-    qDebug() << "[PeerDiscoveryDialog::onTestClicked] Starting parallel test for" << totalPeers << "peers.";
+    qDebug() << "[PeerDiscoveryDialog::onTestClicked]"
+             << "Starting parallel test for"
+             << totalPeers << "peers.";
     for (const PeerData& peer : peerList) {
         PeerData peerToTest = peer;
         peerToTest.latency = -1;
@@ -384,7 +398,12 @@ void PeerDiscoveryDialog::onApplyClicked() {
     // Print the current state of peerList
     qDebug() << "\nCurrent peerList state:";
     for (const auto& peer : peerList) {
-        qDebug() << "Peer in list:" << peer.host << "isValid:" << peer.isValid << "latency:" << peer.latency;
+        qDebug() << "Peer in list:"
+                 << peer.host
+                 << "isValid:"
+                 << peer.isValid
+                 << "latency:"
+                 << peer.latency;
     }
 
     if (selectionModel->hasSelection()) {
@@ -401,7 +420,9 @@ void PeerDiscoveryDialog::onApplyClicked() {
             }
         }
     } else {
-        qDebug() << "\nNo selection, using all" << peerList.size() << "peers";
+        qDebug() << "\nNo selection, using all"
+                 << peerList.size()
+                 << "peers";
         selectedPeers = peerList;
         for (const auto& peer : selectedPeers) {
             qDebug() << "Using peer:" << peer.host
@@ -418,7 +439,9 @@ void PeerDiscoveryDialog::onApplyClicked() {
     }
 
     qDebug() << "Total peers to apply:" << selectedPeers.count()
-             << "Valid peers:" << std::count_if(selectedPeers.begin(), selectedPeers.end(),
+             << "Valid peers:"
+             << std::count_if(selectedPeers.begin(),
+                              selectedPeers.end(),
                    [](const PeerData& p) { return p.isValid; });
     if (peerManager->updateConfig(selectedPeers)) {
         qDebug() << "Configuration updated successfully";
@@ -469,11 +492,19 @@ void PeerDiscoveryDialog::onProxyConfigClicked() {
     layout->addWidget(new QLabel(tr("Password:"), &dlg));
     layout->addWidget(passEdit);
 
-    QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    QDialogButtonBox* buttons
+        = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                               &dlg);
     layout->addWidget(buttons);
 
-    QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
-    QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+    QObject::connect(buttons,
+                     &QDialogButtonBox::accepted,
+                     &dlg,
+                     &QDialog::accept);
+    QObject::connect(buttons,
+                     &QDialogButtonBox::rejected,
+                     &dlg,
+                     &QDialog::reject);
 
     if (dlg.exec() == QDialog::Accepted) {
         QNetworkProxy::ProxyType type = static_cast<QNetworkProxy::ProxyType>(
@@ -496,25 +527,33 @@ void PeerDiscoveryDialog::onProxyConfigClicked() {
  */
 void PeerDiscoveryDialog::onExportClicked() {
     if (peerList.isEmpty()) {
-        QMessageBox::information(this, tr("Export CSV"), tr("No peer data to export."));
+        QMessageBox::information(this,
+                                 tr("Export CSV"),
+                                 tr("No peer data to export."));
         return;
     }
 
     QString defaultFileName = "yggdrasil-peers.csv";
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Export Peers as CSV"),
-                                                    defaultFileName,
-                                                    tr("CSV Files (*.csv);;All Files (*)"));
+    QString fileName
+        = QFileDialog::getSaveFileName(this,
+                                       tr("Export Peers as CSV"),
+                                       defaultFileName,
+                                       tr("CSV Files (*.csv);;All Files (*)"));
 
     if (fileName.isEmpty()) {
         return;
     }
 
     if (peerManager->exportPeersToCsv(fileName, peerList)) {
-        QMessageBox::information(this, tr("Export Successful"),
-                                 tr("Peer data successfully exported to %1").arg(fileName));
+        QMessageBox::information(
+            this,
+            tr("Export Successful"),
+            tr("Peer data successfully exported to %1").arg(fileName));
     } else {
-        QMessageBox::warning(this, tr("Export Error"),
-                             tr("Failed to export peer data. See logs for details."));
+        QMessageBox::warning(
+            this,
+            tr("Export Error"),
+            tr("Failed to export peer data. See logs for details."));
     }
 }
 

@@ -106,14 +106,20 @@ public:
 
         // Manage peers action
         managePeersAction = new QAction(tr("Manage Peers"), trayMenu);
-        connect(managePeersAction, &QAction::triggered, this, &YggdrasilTray::showPeerManager);
+        connect(managePeersAction,
+                &QAction::triggered,
+                this,
+                &YggdrasilTray::showPeerManager);
         trayMenu->addAction(managePeersAction);
 
         trayMenu->addSeparator();
 
         // Quit action
         QAction *quitAction = new QAction(tr("Quit"), trayMenu);
-        connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
+        connect(quitAction,
+                &QAction::triggered,
+                qApp,
+                &QApplication::quit);
         trayMenu->addAction(quitAction);
 
         trayIcon->setContextMenu(trayMenu);
@@ -127,7 +133,10 @@ public:
 
         // Periodic update
         QTimer *timer = new QTimer(this);
-        connect(timer, &QTimer::timeout, this, &YggdrasilTray::updateTrayIcon);
+        connect(timer,
+                &QTimer::timeout,
+                this,
+                &YggdrasilTray::updateTrayIcon);
         timer->start(5000);
 
         updateTrayIcon();
@@ -147,8 +156,10 @@ private slots:
         }
 
         if (!success) {
-            QMessageBox::critical(nullptr, "Service Toggle",
-                                  tr("Failed to toggle Yggdrasil service."));
+            QMessageBox::critical(
+                nullptr,
+                "Service Toggle",
+                tr("Failed to toggle Yggdrasil service."));
         }
 
         updateTrayIcon();

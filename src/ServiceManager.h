@@ -26,7 +26,8 @@ public:
      * @param serviceName The name of the service to manage.
      * @param processRunner Pointer to an IProcessRunner implementation.
      */
-    ServiceManager(const QString &serviceName, const IProcessRunner *processRunner)
+    ServiceManager(const QString &serviceName,
+                   const IProcessRunner *processRunner)
         : serviceName(serviceName), processRunner(processRunner) {}
 
     /**
@@ -69,7 +70,8 @@ private:
 
     /**
      * @brief Executes a systemctl command for the specified action.
-     * @param action The action to perform (e.g., "start", "stop", or "enable --now").
+     * @param action The action to perform (e.g., "start", "stop",
+     * or "enable --now").
      * @return True if the command was successful, false otherwise.
      *
      * This method uses pkexec to run the systemctl command with

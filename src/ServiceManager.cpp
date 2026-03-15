@@ -15,7 +15,10 @@
 bool ServiceManager::isServiceRunning() const {
     QString output, errorOutput;
     QStringList arguments = {"is-active", serviceName};
-    int exitCode = processRunner->run("systemctl", arguments, output, errorOutput);
+    int exitCode = processRunner->run("systemctl",
+                                      arguments,
+                                      output,
+                                      errorOutput);
     Q_UNUSED(errorOutput);
     return (exitCode == 0 && output == "active");
 }
@@ -38,7 +41,8 @@ bool ServiceManager::stopService() const {
 
 /**
  * @brief Enables and starts the specified service immediately.
- * @return True if the service was enabled and started successfully, false otherwise.
+ * @return True if the service was enabled and started successfully,
+ * false otherwise.
  */
 bool ServiceManager::enableService() const {
     return executeCommand("enable --now");
@@ -46,14 +50,18 @@ bool ServiceManager::enableService() const {
 
 /**
  * @brief Executes a systemctl command for the specified action.
- * @param action The action to perform (e.g., "start", "stop", or "enable --now").
+ * @param action The action to perform (e.g., "start", "stop",
+ * or "enable --now").
  * @return True if the command was successful, false otherwise.
  */
 bool ServiceManager::executeCommand(const QString &action) const {
     QString output, errorOutput;
     QStringList arguments = action.split(' ');
     arguments << serviceName;
-    int exitCode = processRunner->run("pkexec", QStringList() << "systemctl" << arguments, output, errorOutput);
+    int exitCode = processRunner->run("pkexec",
+                                      QStringList() << "systemctl" << arguments,
+                                      output,
+                                      errorOutput);
 
     if (exitCode == 0) {
         qDebug() << action

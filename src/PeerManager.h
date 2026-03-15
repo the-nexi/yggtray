@@ -47,9 +47,12 @@ class PeerTestRunnable : public QObject, public QRunnable {
 
 public:
     // Constants for ping test configuration
-    static constexpr int PING_COUNT = 3;            // Number of pings to send
-    static constexpr int CHECK_INTERVAL_MS = 100;   // Interval to check ping status
-    static constexpr int PING_TIMEOUT_MS = 5000;    // Total timeout for ping operation
+    // Number of pings to send
+    static constexpr int PING_COUNT = 3;
+    // Interval to check ping status
+    static constexpr int CHECK_INTERVAL_MS = 100;
+    // Total timeout for ping operation
+    static constexpr int PING_TIMEOUT_MS = 5000;
 
     /**
      * @brief Constructor for PeerTestRunnable
@@ -57,7 +60,9 @@ public:
      * @param cancelFlag Pointer to the shared cancellation flag.
      * @param parent Optional QObject parent.
      */
-    explicit PeerTestRunnable(PeerData peer, QAtomicInt* cancelFlag, QObject *parent = nullptr);
+    explicit PeerTestRunnable(PeerData peer,
+                              QAtomicInt* cancelFlag,
+                              QObject *parent = nullptr);
 
     /**
      * @brief The main execution method for the runnable task.
@@ -98,11 +103,14 @@ class PeerManager : public QObject {
 
 public:
     // Constants for configuration
-    static constexpr int SCRIPT_TIMEOUT_MS = 30000;    // Timeout for update script execution
-    static constexpr int MAX_PEERS = 15;               // Maximum number of peers to use in config
+    // Timeout for update script execution
+    static constexpr int SCRIPT_TIMEOUT_MS = 30000;
+    // Maximum number of peers to use in config
+    static constexpr int MAX_PEERS = 15;
 
 public:
-    explicit PeerManager(bool debugMode = false, QObject *parent = nullptr);
+    explicit PeerManager(bool debugMode = false,
+                         QObject *parent = nullptr);
     ~PeerManager();
 
     /**
@@ -144,9 +152,11 @@ public:
      * @param resourcePath Path to the resource file in Qt's resource system
      * @param outputPath Path where the resource should be extracted
      * @return true if extraction was successful, false otherwise
-     * @details If the resource has .sh extension, the output file will be made executable
+     * @details If the resource has .sh extension, the output file
+     * will be made executable
      */
-    bool extractResource(const QString& resourcePath, const QString& outputPath);
+    bool extractResource(const QString& resourcePath,
+                         const QString& outputPath);
 
     /**
      * @brief Updates Yggdrasil configuration with selected peers
@@ -168,7 +178,8 @@ public:
      * @param peerList The list of peers to export
      * @return true if the export was successful, false otherwise
      */
-    bool exportPeersToCsv(const QString& fileName, const QList<PeerData>& peerList);
+    bool exportPeersToCsv(const QString& fileName,
+                          const QList<PeerData>& peerList);
 
 signals:
     void peersDiscovered(const QList<PeerData>& peers);
@@ -180,7 +191,8 @@ private slots:
     /**
      * @brief Handles the response from public peers repository
      * @param reply Network reply containing peer list HTML
-     * @details Parses HTML to extract peer URIs and emits peersDiscovered signal
+     * @details Parses HTML to extract peer URIs and emits
+     * peersDiscovered signal
      */
     void handleNetworkResponse(QNetworkReply* reply);
 
