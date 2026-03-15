@@ -59,6 +59,7 @@ add_executable(yggtray
     src/SocketManager.cpp
     src/PeerManager.cpp
     src/PeerDiscoveryDialog.cpp
+    src/SetupWizard.cpp
     ${RESOURCES} 
     ${QM_FILES}
 )
