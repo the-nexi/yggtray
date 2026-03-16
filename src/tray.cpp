@@ -15,6 +15,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QPixmap>
+#include <QSettings>
 #include <QSharedMemory>
 #include <QStringList>
 #include <QSystemTrayIcon>
@@ -242,6 +243,11 @@ void printHelp(const char* program) {
  */
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
+    auto settings = std::make_shared<QSettings>(
+        QSettings::IniFormat,
+        QSettings::UserScope,
+        "github.com/the-nexi",
+        "Yggtray");
 
     QTranslator translator;
     if (translator.load(":/translations/yggtray.qm")) {
@@ -299,7 +305,7 @@ int main(int argc, char *argv[]) {
 
     QApplication::setQuitOnLastWindowClosed(false);
 
-    SetupWizard wizard;
+    SetupWizard wizard(settings);
     wizard.run(forceSetup);
 
     YggdrasilTray tray(debugMode);

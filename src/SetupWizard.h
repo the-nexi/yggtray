@@ -10,12 +10,14 @@
 #ifndef SETUPWIZARD_H
 #define SETUPWIZARD_H
 
+#include <memory>
 #include <QDir>
 #include <QFile>
 #include <QInputDialog>
 #include <QMap>
 #include <QMessageBox>
 #include <QProcess>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QString>
 #include <QTextStream>
@@ -39,6 +41,11 @@ public:
         QString installCmd;      // Full installation command
     };
 
+    SetupWizard(std::shared_ptr<QSettings> settings)
+        : settings(settings) {
+        // Do nothing.
+    }
+
     /**
      * @brief Runs the setup wizard if not already completed.
      * @param forceRun If true, the wizard runs regardless of the config file
@@ -47,6 +54,8 @@ public:
     void run(bool forceRun = false);
 
 private:
+    std::shared_ptr<QSettings> settings;
+
     /**
      * @brief Ensures the main Yggdrasil configuration file
      * (yggdrasil.conf) exists.
