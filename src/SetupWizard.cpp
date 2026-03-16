@@ -177,40 +177,12 @@ QString SetupWizard::getConfigFilePath() const {
 }
 
 bool SetupWizard::isSetupComplete() {
-    QFile configFile(getConfigFilePath());
-    if (!configFile.exists()) {
-        return false;
-    }
-
-    if (!configFile.open(QFile::ReadOnly | QFile::Text)) {
-        return false;
-    }
-
-    QTextStream in(&configFile);
-    QString content = in.readAll();
-    configFile.close();
-
-    return content.contains("setup_complete=true");
+    return settings->value("setup_wizard/setup_complete",
+                           false).toBool();
 }
 
 void SetupWizard::markSetupComplete() {
-    QString configFilePath = getConfigFilePath();
-    QDir configDir(QFileInfo(configFilePath).absolutePath());
-    if (!configDir.exists()) {
-        configDir.mkpath(".");
-    }
-
-    QFile configFile(configFilePath);
-    if (configFile.open(QFile::WriteOnly | QFile::Text)) {
-        QTextStream out(&configFile);
-        out << "setup_complete=true\n";
-        configFile.close();
-    } else {
-        QMessageBox::warning(
-            nullptr,
-            QObject::tr("Setup Wizard"),
-            QObject::tr("Failed to mark the setup as complete."));
-    }
+    settings->setValue("setup_wizard/setup_complete", true);
 }
 
 QString SetupWizard::promptAction(const QString &message,
