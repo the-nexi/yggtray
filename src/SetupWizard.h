@@ -157,6 +157,11 @@ private:
      * @param distroInfo Distribution information containing service name
      */
     void enableIp6tablesService(const DistroInfo &distroInfo);
+
+    /**
+     * Migrate old settings to QSettings.
+     */
+    bool migrateSettings();
 };
 
 #endif // SETUPWIZARD_H

@@ -67,6 +67,14 @@
   <context>
     <name>QObject</name>
     <message>
+      <source>Settings migration error</source>
+      <translation>Ошибка миграции настроек</translation>
+    </message>
+    <message>
+      <source>Cannot open the old settings file: </source>
+      <translation>Невозможно открыть файл настроек: </translation>
+    </message>
+    <message>
       <source>yes</source>
       <translation>да</translation>
     </message>

@@ -1,3 +1,4 @@
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QInputDialog>
@@ -11,7 +12,45 @@
 
 #include "SetupWizard.h"
 
+/**
+ * Migrate old settings to QSettings.  Delete the old settings file.
+ * @return true if the migration is done, false otherwise.
+ */
+bool SetupWizard::migrateSettings() {
+    QFile configFile(getConfigFilePath());
+    if (! configFile.exists()) {
+        qDebug() << "No migration is needed.";
+        return false;
+    }
+
+    if (! configFile.open(QFile::ReadOnly | QFile::Text)) {
+        qCritical() << "Cannot open the old settings file:"
+                    << configFile.fileName();
+        QMessageBox::critical(
+            nullptr,
+            QObject::tr("Settings migration error"),
+            QObject::tr("Cannot open the old settings file: ")
+            + configFile.fileName());
+        return false;
+    }
+    qDebug() << "Settings file migration:"
+             << configFile.fileName() << " -> " << settings->fileName();
+    QTextStream in(&configFile);
+    QString content = in.readAll();
+    configFile.close();
+
+    settings->setValue("setup_wizard/setup_complete",
+                       content.contains("setup_complete=true"));
+    configFile.remove();
+    qDebug() << "Settings file migration is finished.";
+    return true;
+}
+
 void SetupWizard::run(bool forceRun) {
+
+    // TODO: Remove this migration in the following Yggtray versions.
+    migrateSettings();
+
     if (!forceRun && isSetupComplete()) {
         return; // Skip if setup is already complete and not triggered via CLI
     }
