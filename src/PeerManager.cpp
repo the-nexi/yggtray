@@ -398,13 +398,6 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     qDebug() << "[PeerManager::updateConfig] Starting update with"
              << selectedPeers.count() << "peers";
 
-    // Count valid peers for logging
-    int totalValidPeers
-        = std::count_if(selectedPeers.begin(), selectedPeers.end(),
-                        [](const PeerData& p) { return p.isValid; });
-    qDebug() << "[PeerManager::updateConfig] Valid peers in selection:"
-             << totalValidPeers;
-
     // Sort peers by latency (lowest first)
     QList<PeerData> sortedPeers = selectedPeers;
     std::sort(sortedPeers.begin(), sortedPeers.end(),
@@ -421,6 +414,8 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
                  sortedPeers.end(),
                  std::back_inserter(validPeers),
                  [](const PeerData& p) { return p.isValid; });
+    qDebug() << "[PeerManager::updateConfig] Valid peers in selection:"
+             << validPeers.size();
 
     // Extract update script to /tmp
     if (!extractResource(":/scripts/update-peers.sh", SCRIPT_PATH)) {
@@ -453,7 +448,7 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     // First try to write only valid peers
     if (validPeers.size() > 0) {
         qDebug() << "[PeerManager::updateConfig] Writing"
-                 << totalValidPeers
+                 << validPeers.size()
                  << "valid peers to config (up to"
                  << MAX_PEERS << "will be used)";
         writePeers(stream, validPeers);
