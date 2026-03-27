@@ -47,7 +47,7 @@ trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
 # Process and clean up the peers file - trim whitespace, ensure proper formatting
 [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Processing peer list from $PEERS_FILE..." >&2
 {
-    echo "Peers: ["
+    echo "  Peers: ["
     # Process each line, trim whitespace, ensure proper format
     COUNT=0
     MAX_PEERS=15  # Limit to 15 peers as mentioned in the comments
@@ -71,15 +71,14 @@ trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
         # Count the peers we're adding (up to MAX_PEERS)
         COUNT=$((COUNT + 1))
         if [ "$COUNT" -le "$MAX_PEERS" ]; then
-            # Output each peer on its own line without commas or indentation
-            echo "$line"
+            echo "    $line"
             [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Added peer $COUNT: $line" >&2
         else
             [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Reached max peers limit ($MAX_PEERS), skipping: $line" >&2
             break
         fi
     done < "$PEERS_FILE"
-    echo "]"
+    echo "  ]"
 } > "$TEMP_FILE.peers"
 
 # Check if the file has any peers
