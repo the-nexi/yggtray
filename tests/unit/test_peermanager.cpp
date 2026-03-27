@@ -25,6 +25,33 @@ START_TEST(test_formatPeer) {
                      HOST.toUtf8().constData());
 }
 
+// Write a peer data into a temporary file, read back the file contents and
+// compare with the expected result.
+START_TEST(test_writePeers) {
+    const QList<QString> HOSTS = {
+        "tls://example.com:1000",
+        "tls://example.com:1001"
+    };
+    QTemporaryFile tmpFile;
+    ck_assert(tmpFile.open());
+    QTextStream stream(&tmpFile);
+    PeerData peer1;
+    peer1.host = HOSTS[0];
+    peer1.latency = 10;
+    peer1.isValid = true;
+    PeerData peer2;
+    peer2.host = HOSTS[1];
+    peer2.latency = 12;
+    peer2.isValid = true;
+    QList<PeerData> peers = { peer1, peer2 };
+    writePeers(stream, peers);
+    stream.flush();
+    tmpFile.seek(0);
+    QString fileContent = QString::fromUtf8(tmpFile.readAll());
+    ck_assert_str_eq(fileContent.toUtf8().constData(),
+                     "tls://example.com:1000\ntls://example.com:1001\n");
+}
+
 // Test getHostname logic
 START_TEST(test_getHostname_basic)
 {
@@ -273,6 +300,7 @@ Suite* peermanager_suite(void)
     TCase* tc = tcase_create("Core");
 
     tcase_add_test(tc, test_formatPeer);
+    tcase_add_test(tc, test_writePeers);
     tcase_add_test(tc, test_getHostname_basic);
     tcase_add_test(tc, test_exportPeersToCsv_basic);
     tcase_add_test(tc, test_peersDiscovered_signal);

@@ -213,5 +213,6 @@ private:
 // Auxiliary procedures.
 
 void formatPeer(QTextStream& stream, const PeerData& peer);
+void writePeers(QTextStream& stream, const QList<PeerData>& peers);
 
 #endif // PEERMANAGER_H

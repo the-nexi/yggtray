@@ -379,6 +379,17 @@ void formatPeer(QTextStream& stream, const PeerData& peer) {
 }
 
 /**
+ * @brief Write a list of peers into an output stream.
+ * @param stream An output text stream to write data to.
+ * @param peers A list of peers to write.
+ */
+void writePeers(QTextStream& stream, const QList<PeerData>& peers) {
+    for (const auto& peer : peers) {
+        formatPeer(stream, peer);
+    }
+}
+
+/**
  * @brief Updates Yggdrasil configuration with selected peers
  * @param selectedPeers List of peers to include in configuration
  * @return true if configuration was successfully updated
@@ -403,6 +414,13 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
             }
             return a.isValid > b.isValid;
         });
+
+    QList<PeerData> validPeers;
+    validPeers.reserve(sortedPeers.size());
+    std::copy_if(sortedPeers.begin(),
+                 sortedPeers.end(),
+                 std::back_inserter(validPeers),
+                 [](const PeerData& p) { return p.isValid; });
 
     // Extract update script to /tmp
     if (!extractResource(":/scripts/update-peers.sh", SCRIPT_PATH)) {
@@ -431,35 +449,26 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
 
     // Write peers to temporary file
     QTextStream stream(&peersFile);
-    int validPeerCount = 0;
 
     // First try to write only valid peers
-    for (const auto& peer : sortedPeers) {
-        if (peer.isValid) {
-            formatPeer(stream, peer);
-            validPeerCount++;
-        }
-    }
-
-    // If no valid peers, use all peers as a fallback
-    if (validPeerCount == 0) {
+    if (validPeers.size() > 0) {
+        qDebug() << "[PeerManager::updateConfig] Writing"
+                 << totalValidPeers
+                 << "valid peers to config (up to"
+                 << MAX_PEERS << "will be used)";
+        writePeers(stream, validPeers);
+    } else {
+        // If no valid peers, use all peers as a fallback
         qDebug() << "[PeerManager::updateConfig]"
                  << "Warning: No valid peers found, using all peers as fallback";
         stream.seek(0); // Reset the stream position
 
         // Use all peers instead, sorted by latency if available
-        for (const auto& peer : sortedPeers) {
-            formatPeer(stream, peer);
-        }
+        writePeers(stream, sortedPeers);
 
         qDebug() << "[PeerManager::updateConfig] Writing"
                  << sortedPeers.count()
                  << "peers to config (up to" << MAX_PEERS << "will be used)";
-    } else {
-        qDebug() << "[PeerManager::updateConfig] Writing"
-                 << validPeerCount
-                 << "valid peers to config (up to"
-                 << MAX_PEERS << "will be used)";
     }
 
     stream.flush();
