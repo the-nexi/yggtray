@@ -6,6 +6,25 @@
 #include <QtTest/QtTest>
 #include "../../src/PeerManager.h"
 
+// Write a peer data into a temporary file, read back the file contents and
+// compare with the expected result.
+START_TEST(test_formatPeer) {
+    const QString HOST = "tls://example.com";
+    QTemporaryFile tmpFile;
+    ck_assert(tmpFile.open());
+    QTextStream stream(&tmpFile);
+    PeerData peer;
+    peer.host = HOST;
+    peer.latency = 10;
+    peer.isValid = true;
+    formatPeer(stream, peer);
+    stream.flush();
+    tmpFile.seek(0);
+    QString fileContent = QString::fromUtf8(tmpFile.readAll());
+    ck_assert_str_eq(fileContent.toUtf8().constData(),
+                     HOST.toUtf8().constData());
+}
+
 // Test getHostname logic
 START_TEST(test_getHostname_basic)
 {
@@ -253,6 +272,7 @@ Suite* peermanager_suite(void)
     Suite* s = suite_create("PeerManager");
     TCase* tc = tcase_create("Core");
 
+    tcase_add_test(tc, test_formatPeer);
     tcase_add_test(tc, test_getHostname_basic);
     tcase_add_test(tc, test_exportPeersToCsv_basic);
     tcase_add_test(tc, test_peersDiscovered_signal);

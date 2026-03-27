@@ -369,6 +369,16 @@ bool PeerManager::extractResource(const QString& resourcePath,
 }
 
 /**
+ * @brief Print a peer data into a stream in a format suitable for adding to the
+ * Yggdrasil config.
+ * @param stream A text stream to print data to.
+ * @param peer A peer data to be printed.
+ */
+void formatPeer(QTextStream& stream, const PeerData& peer) {
+    stream << peer.host << "\n";
+}
+
+/**
  * @brief Updates Yggdrasil configuration with selected peers
  * @param selectedPeers List of peers to include in configuration
  * @return true if configuration was successfully updated
@@ -426,7 +436,7 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     // First try to write only valid peers
     for (const auto& peer : sortedPeers) {
         if (peer.isValid) {
-            stream << peer.host << "\n";
+            formatPeer(stream, peer);
             validPeerCount++;
         }
     }
@@ -439,7 +449,7 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
 
         // Use all peers instead, sorted by latency if available
         for (const auto& peer : sortedPeers) {
-            stream << peer.host << "\n";
+            formatPeer(stream, peer);
         }
 
         qDebug() << "[PeerManager::updateConfig] Writing"

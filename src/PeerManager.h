@@ -209,4 +209,9 @@ private:
     bool debugMode;
 };
 
+
+// Auxiliary procedures.
+
+void formatPeer(QTextStream& stream, const PeerData& peer);
+
 #endif // PEERMANAGER_H
