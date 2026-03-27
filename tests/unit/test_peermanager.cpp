@@ -21,8 +21,10 @@ START_TEST(test_formatPeer) {
     stream.flush();
     tmpFile.seek(0);
     QString fileContent = QString::fromUtf8(tmpFile.readAll());
+    QString expectedResult =
+        "tls://example.com\n";
     ck_assert_str_eq(fileContent.toUtf8().constData(),
-                     HOST.toUtf8().constData());
+                     expectedResult.toUtf8().constData());
 }
 
 // Write a peer data into a temporary file, read back the file contents and
@@ -48,8 +50,11 @@ START_TEST(test_writePeers) {
     stream.flush();
     tmpFile.seek(0);
     QString fileContent = QString::fromUtf8(tmpFile.readAll());
+    QString expectedResult =
+        "tls://example.com:1000\n"
+        "tls://example.com:1001\n";
     ck_assert_str_eq(fileContent.toUtf8().constData(),
-                     "tls://example.com:1000\ntls://example.com:1001\n");
+                     expectedResult.toUtf8().constData());
 }
 
 // Test getHostname logic
