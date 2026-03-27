@@ -15,6 +15,9 @@
 
 #include "PeerManager.h"
 
+static const QString SCRIPT_PATH = "/tmp/yggtray-update-peers.sh";
+static const QString POLICY_PATH = "/tmp/org.yggtray.updatepeers.policy";
+
 /**
  * @brief Constructor for PeerTestRunnable
  * @param peer The peer data to test.
@@ -392,19 +395,16 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
         });
 
     // Extract update script to /tmp
-    QString scriptPath = "/tmp/yggtray-update-peers.sh";
-    QString policyPath = "/tmp/org.yggtray.updatepeers.policy";
-
-    if (!extractResource(":/scripts/update-peers.sh", scriptPath)) {
+    if (!extractResource(":/scripts/update-peers.sh", SCRIPT_PATH)) {
         qDebug() << "[PeerManager::updateConfig]"
                  << "Failed to extract update script";
         return false;
     }
 
     if (!extractResource(":/polkit/org.yggtray.updatepeers.policy",
-                         policyPath)) {
+                         POLICY_PATH)) {
         // Clean up script if policy extraction fails
-        QFile::remove(scriptPath);
+        QFile::remove(SCRIPT_PATH);
         qDebug() << "[PeerManager::updateConfig]"
                  << "Failed to extract policy file";
         return false;
@@ -465,9 +465,9 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     QProcess process;
     QStringList args;
     if (debugMode) {
-        args << "sh" << scriptPath << "--verbose" << peersFile.fileName();
+        args << "sh" << SCRIPT_PATH << "--verbose" << peersFile.fileName();
     } else {
-        args << "sh" << scriptPath << peersFile.fileName();
+        args << "sh" << SCRIPT_PATH << peersFile.fileName();
     }
 
     qDebug() << "[PeerManager::updateConfig]"
@@ -477,8 +477,8 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     if (!process.waitForFinished(SCRIPT_TIMEOUT_MS)) {
         QString errorMsg = "Update script timed out";
         qDebug() << "[PeerManager::updateConfig] Error:" << errorMsg;
-        QFile::remove(scriptPath);
-        QFile::remove(policyPath);
+        QFile::remove(SCRIPT_PATH);
+        QFile::remove(POLICY_PATH);
         emit error(errorMsg);
         return false;
     }
@@ -497,8 +497,8 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
                      << "treating as successful";
 
             // Clean up temporary files
-            QFile::remove(scriptPath);
-            QFile::remove(policyPath);
+            QFile::remove(SCRIPT_PATH);
+            QFile::remove(POLICY_PATH);
             return true;
         }
 
@@ -512,8 +512,8 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
         }
 
         qDebug() << "[PeerManager::updateConfig] Error:" << errorMsg;
-        QFile::remove(scriptPath);
-        QFile::remove(policyPath);
+        QFile::remove(SCRIPT_PATH);
+        QFile::remove(POLICY_PATH);
         emit error(errorMsg);
         return false;
     }
@@ -527,8 +527,8 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     }
 
     // Clean up temporary files
-    QFile::remove(scriptPath);
-    QFile::remove(policyPath);
+    QFile::remove(SCRIPT_PATH);
+    QFile::remove(POLICY_PATH);
     return true;
 }
 
