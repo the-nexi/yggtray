@@ -51,23 +51,23 @@ trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
     # Process each line, trim whitespace, ensure proper format
     COUNT=0
     MAX_PEERS=15  # Limit to 15 peers as mentioned in the comments
-    
+
     while IFS= read -r line || [ -n "$line" ]; do
         # Skip empty lines
         [ -z "$line" ] && continue
-        
+
         # Trim whitespace
         line=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-        
+
         # Skip if empty after trimming
         [ -z "$line" ] && continue
-        
+
         # Enforce proper URI format - must be tls://, tcp:// or quic:// followed by host and port
         if ! echo "$line" | grep -qE '^(tls|tcp|quic)://[^[:space:]]+:[0-9]+$'; then
             [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Skipping invalid peer URI format: $line" >&2
             continue
         fi
-        
+
         # Count the peers we're adding (up to MAX_PEERS)
         COUNT=$((COUNT + 1))
         if [ "$COUNT" -le "$MAX_PEERS" ]; then
@@ -98,20 +98,20 @@ cp "$CONFIG_FILE" "$TIMESTAMPED_BACKUP_FILE"
 [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Updating configuration..." >&2
 awk '
   BEGIN { in_peers_section = 0; }
-  
+
   # When we find the Peers section opening
   /^[[:space:]]*Peers[[:space:]]*:[[:space:]]*\[/ {
     in_peers_section = 1;
     system("cat \"'"$TEMP_FILE.peers"'\"");
     next;
   }
-  
+
   # When we find the Peers section closing
   in_peers_section && /^[[:space:]]*\]/ {
     in_peers_section = 0;
     next;
   }
-  
+
   # Print all lines that are not part of the Peers section
   !in_peers_section {
     print;
