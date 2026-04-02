@@ -1,6 +1,7 @@
 #ifndef PEERMANAGER_H
 #define PEERMANAGER_H
 
+#include <memory>
 #include <QAtomicInt>
 #include <QElapsedTimer>
 #include <QList>
@@ -10,6 +11,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QRunnable>
+#include <QSettings>
 #include <QThreadPool>
 
 /**
@@ -109,7 +111,8 @@ public:
     static constexpr int MAX_PEERS = 15;
 
 public:
-    explicit PeerManager(bool debugMode = false,
+    explicit PeerManager(std::shared_ptr<QSettings> settings,
+                         bool debugMode = false,
                          QObject *parent = nullptr);
     ~PeerManager();
 
@@ -207,6 +210,7 @@ private:
     QThreadPool* threadPool;
     QAtomicInt cancelTestsFlag;
     bool debugMode;
+    std::shared_ptr<QSettings> settings;
 };
 
 

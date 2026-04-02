@@ -5,10 +5,12 @@
  * Contains implementation of methods for managing Yggdrasil peers.
  */
 
+#include <memory>
 #include <QDebug>
 #include <QFile>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QSettings>
 #include <QTemporaryFile>
 #include <QTextStream>
 #include <QThreadPool>
@@ -228,15 +230,19 @@ bool PeerManager::exportPeersToCsv(const QString& fileName,
 
 /**
  * @brief Constructor for PeerManager
+ * @param settings Application settings
  * @param debugMode Whether to enable debug output
  * @param parent Parent QObject
  */
-PeerManager::PeerManager(bool debugMode, QObject *parent)
+PeerManager::PeerManager(std::shared_ptr<QSettings> settings,
+                         bool debugMode,
+                         QObject *parent)
     : QObject(parent)
     , networkManager(new QNetworkAccessManager(this))
     , threadPool(new QThreadPool(this))
     , cancelTestsFlag(0)
-    , debugMode(debugMode) {
+    , debugMode(debugMode)
+    , settings(settings) {
 
     qRegisterMetaType<PeerData>("PeerData");
     qRegisterMetaType<QList<PeerData>>("QList<PeerData>");
@@ -551,6 +557,17 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
  * @param reply Network reply containing peer list HTML
  */
 void PeerManager::handleNetworkResponse(QNetworkReply* reply) {
+    QList<PeerData> privatePeersList;
+    QString privatePeers
+        = settings->value("peer_discovery/private_peers", "").toString();
+    qDebug() << "[PeerManager::handleNetworkResponse]"
+             << "Private peers: "
+             << privatePeers;
+    for (auto& p : privatePeers.split(",")) {
+        PeerData peer;
+        peer.host = p;
+        privatePeersList.append(peer);
+    }
     if (reply->error() == QNetworkReply::NoError) {
         QString html = QString::fromUtf8(reply->readAll());
         QList<PeerData> peers;
@@ -570,7 +587,12 @@ void PeerManager::handleNetworkResponse(QNetworkReply* reply) {
                 peers.append(peer);
             }
         }
-
+        if (! privatePeersList.isEmpty()) {
+            // Insert private peers into the beginning of the peer list
+            // so they will be tested first for the latency.
+            privatePeersList += peers;
+            peers = privatePeersList;
+        }
         emit peersDiscovered(peers);
     } else {
         emit error(tr("Failed to fetch peers: %1").arg(reply->errorString()));

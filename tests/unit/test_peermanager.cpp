@@ -61,7 +61,7 @@ START_TEST(test_writePeers) {
 START_TEST(test_getHostname_basic)
 {
     printf("[PeerManager] test_getHostname_basic: Testing getHostname parsing...\n");
-    PeerManager mgr(false, nullptr);
+    PeerManager mgr(nullptr, false, nullptr);
     ck_assert_str_eq(
         mgr.getHostname("tls://[2001:db8::1]:1234").toUtf8().constData(),
         "2001:db8::1"
@@ -85,7 +85,7 @@ END_TEST
 START_TEST(test_exportPeersToCsv_basic)
 {
     printf("[PeerManager] test_exportPeersToCsv_basic: Testing exportPeersToCsv output...\n");
-    PeerManager mgr(false, nullptr);
+    PeerManager mgr(nullptr, false, nullptr);
     QList<PeerData> peers;
     PeerData p1;
     p1.host = "peer1";
@@ -144,7 +144,7 @@ public:
 START_TEST(test_peersDiscovered_signal)
 {
     printf("[PeerManager] test_peersDiscovered_signal: Testing peersDiscovered signal after HTML parsing...\n");
-    PeerManager mgr(false, nullptr);
+    PeerManager mgr(nullptr, false, nullptr);
 
     // Prepare HTML with two peer URIs
     QByteArray html =
@@ -182,7 +182,7 @@ END_TEST
 START_TEST(test_error_signal_network_failure)
 {
     printf("[PeerManager] test_error_signal_network_failure: Testing error signal on network failure...\n");
-    PeerManager mgr(false, nullptr);
+    PeerManager mgr(nullptr, false, nullptr);
 
     DummyReply* reply = new DummyReply("", nullptr);
     reply->setError(QNetworkReply::ConnectionRefusedError, "Connection refused");
@@ -210,7 +210,7 @@ END_TEST
 START_TEST(test_cancelTests_cancels_all)
 {
     printf("[PeerManager] test_cancelTests_cancels_all: Testing that cancelTests cancels all peer checks...\n");
-    PeerManager mgr(false, nullptr);
+    PeerManager mgr(nullptr, false, nullptr);
 
     QSignalSpy spy(&mgr, SIGNAL(peerTested(PeerData)));
 
@@ -247,7 +247,7 @@ END_TEST
 START_TEST(test_peersDiscovered_empty_list)
 {
     printf("[PeerManager] test_peersDiscovered_empty_list: Testing peersDiscovered with empty peer list...\n");
-    PeerManager mgr(false, nullptr);
+    PeerManager mgr(nullptr, false, nullptr);
 
     QByteArray html = "<html><body></body></html>"; // No <td> tags
     DummyReply* reply = new DummyReply(html);
@@ -275,7 +275,7 @@ END_TEST
 START_TEST(test_error_signal_peerlist_unreachable)
 {
     printf("[PeerManager] test_error_signal_peerlist_unreachable: Testing error signal when peer list server is unreachable...\n");
-    PeerManager mgr(false, nullptr);
+    PeerManager mgr(nullptr, false, nullptr);
 
     DummyReply* reply = new DummyReply("", nullptr);
     reply->setError(QNetworkReply::HostNotFoundError, "Host not found");

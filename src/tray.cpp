@@ -65,12 +65,15 @@ class YggdrasilTray : public QObject {
     Q_OBJECT
 
 public:
-    explicit YggdrasilTray(bool debugMode = false, QObject *parent = nullptr)
+    explicit YggdrasilTray(std::shared_ptr<QSettings> settings,
+                           bool debugMode = false,
+                           QObject *parent = nullptr)
         : QObject(parent)
         , processRunner()
         , serviceManager("yggdrasil", &processRunner)
         , socketManager(POSSIBLE_YGG_SOCKET_PATHS)
-        , debugMode(debugMode) {
+        , debugMode(debugMode)
+        , settings(settings) {
         trayIcon = new QSystemTrayIcon(this);
         trayIcon->setIcon(QIcon(ICON_NOT_RUNNING));
         trayIcon->setToolTip(TOOLTIP);
@@ -212,9 +215,11 @@ private:
     SocketManager socketManager;
     bool debugMode;
 
+    std::shared_ptr<QSettings> settings;
+
 private slots:
     void showPeerManager() {
-        PeerDiscoveryDialog dialog(debugMode, nullptr);
+        PeerDiscoveryDialog dialog(settings, debugMode, nullptr);
         if (dialog.exec() == QDialog::Accepted) {
             // Restart the service to apply the new configuration
             if (serviceManager.isServiceRunning()) {
@@ -308,7 +313,7 @@ int main(int argc, char *argv[]) {
     SetupWizard wizard(settings);
     wizard.run(forceSetup);
 
-    YggdrasilTray tray(debugMode);
+    YggdrasilTray tray(settings, debugMode);
 
     return app.exec();
 }

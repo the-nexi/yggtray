@@ -1,6 +1,7 @@
 #ifndef PEERDISCOVERYDIALOG_H
 #define PEERDISCOVERYDIALOG_H
 
+#include <memory>
 #include <QCloseEvent>
 #include <QDialog>
 #include <QLabel>
@@ -9,6 +10,7 @@
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QTranslator>
+#include <QSettings>
 
 #include "PeerManager.h"
 
@@ -88,7 +90,8 @@ class PeerDiscoveryDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit PeerDiscoveryDialog(bool debugMode = false,
+    explicit PeerDiscoveryDialog(std::shared_ptr<QSettings> settings,
+                                 bool debugMode = false,
                                  QWidget *parent = nullptr);
 
     /**
@@ -114,6 +117,11 @@ private slots:
      */
     void onProxyConfigClicked();
 
+    /**
+     * @brief Show the private peers configuration dialog.
+     */
+    void onPrivatePeersClicked();
+
 private:
     void setupUi();
     void setupConnections();
@@ -121,12 +129,20 @@ private:
     void resetTableUI();
     void setRowColor(int row, bool isValid, bool isTested);
 
+    std::shared_ptr<QSettings> settings;
+
     PeerManager* peerManager;
     QPushButton* refreshButton;
     QPushButton* testButton;
     QPushButton* applyButton;
     QPushButton* exportButton;
     QPushButton* proxyButton;
+
+    /**
+     * @brief A button that opens the private peers manager.
+     */
+    QPushButton* privatePeersButton;
+
     QTableWidget* peerTable;
     QProgressBar* progressBar;
     QLabel* statusLabel;

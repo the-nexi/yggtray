@@ -286,6 +286,14 @@ Please complete the installation in the terminal window and then click OK to con
       <translation>Прокси...</translation>
     </message>
     <message>
+      <source>Private peers...</source>
+      <translation>Приватные пиры...</translation>
+    </message>
+    <message>
+      <source>Configure private peers</source>
+      <translation>Настройка приватных пиров</translation>
+    </message>
+    <message>
       <source>Configure Proxy</source>
       <translation>Настроить прокси</translation>
     </message>

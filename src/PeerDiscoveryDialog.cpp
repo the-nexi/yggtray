@@ -5,6 +5,7 @@
  * Contains implementation of dialog for discovering and managing Yggdrasil peers.
  */
 
+#include <memory>
 #include <QBrush>
 #include <QClipboard>
 #include <QComboBox>
@@ -17,7 +18,9 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QNetworkProxy>
+#include <QPlainTextEdit>
 #include <QPushButton>
+#include <QSettings>
 #include <QSpinBox>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -30,15 +33,19 @@ static const int DEFAULT_DIALOG_HEIGHT = 400;
 
 /**
  * @brief Constructor for PeerDiscoveryDialog
+ * @param settings Application settings
  * @param debugMode Whether to enable debug output
  * @param parent Parent widget
  */
-PeerDiscoveryDialog::PeerDiscoveryDialog(bool debugMode, QWidget *parent)
+PeerDiscoveryDialog::PeerDiscoveryDialog(std::shared_ptr<QSettings> settings,
+                                         bool debugMode,
+                                         QWidget *parent)
     : QDialog(parent)
-    , peerManager(new PeerManager(debugMode, this))
+    , peerManager(new PeerManager(settings, debugMode, this))
     , testedPeers(0)
     , totalPeers(0)
-    , isTesting(false) {
+    , isTesting(false)
+    , settings(settings) {
     setWindowTitle(tr("Peer Discovery"));
     setupUi();
     setupConnections();
@@ -89,6 +96,7 @@ void PeerDiscoveryDialog::setupUi() {
     applyButton = new QPushButton(tr("Apply"), this);
     exportButton = new QPushButton(tr("Export CSV"), this);
     proxyButton = new QPushButton(tr("Proxy..."), this);
+    privatePeersButton = new QPushButton(tr("Private peers..."), this);
     testButton->setEnabled(false);
     applyButton->setEnabled(false);
     exportButton->setEnabled(false);
@@ -98,6 +106,7 @@ void PeerDiscoveryDialog::setupUi() {
     buttonLayout->addWidget(applyButton);
     buttonLayout->addWidget(exportButton);
     buttonLayout->addWidget(proxyButton);
+    buttonLayout->addWidget(privatePeersButton);
     buttonLayout->addStretch();
 
     peerTable = new PeerDiscoveryTableWidget(this);
@@ -154,6 +163,8 @@ void PeerDiscoveryDialog::setupConnections() {
 
     connect(proxyButton, &QPushButton::clicked,
             this, &PeerDiscoveryDialog::onProxyConfigClicked);
+    connect(privatePeersButton, &QPushButton::clicked,
+            this, &PeerDiscoveryDialog::onPrivatePeersClicked);
 }
 
 /**
@@ -516,6 +527,45 @@ void PeerDiscoveryDialog::onProxyConfigClicked() {
             QNetworkProxy proxy(type, host, port, user, pass);
             setPeerFetchProxy(proxy);
         }
+    }
+}
+
+/**
+ * @brief Show the private peer configuration dialog.
+ */
+void PeerDiscoveryDialog::onPrivatePeersClicked() {
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("Configure private peers"));
+
+    QVBoxLayout* layout = new QVBoxLayout(&dlg);
+
+    QPlainTextEdit *textArea = new QPlainTextEdit(&dlg);
+    layout->addWidget(textArea);
+
+    QDialogButtonBox* buttons
+        = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                               &dlg);
+    layout->addWidget(buttons);
+
+    QString peers
+        = settings->value("peer_discovery/private_peers", "").toString();
+    textArea->setPlainText(peers.split(",").join("\n"));
+
+    QObject::connect(buttons,
+                     &QDialogButtonBox::accepted,
+                     &dlg,
+                     &QDialog::accept);
+    QObject::connect(buttons,
+                     &QDialogButtonBox::rejected,
+                     &dlg,
+                     &QDialog::reject);
+
+    if (dlg.exec() == QDialog::Accepted) {
+        QString content = textArea->toPlainText();
+        QStringList lines = content.split("\n");
+        QString s = lines.join(",");
+        settings->setValue("peer_discovery/private_peers",
+                           s);
     }
 }
 
