@@ -63,7 +63,7 @@ trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
         [ -z "$line" ] && continue
 
         # Enforce proper URI format - must be tls://, tcp:// or quic:// followed by host and port
-        if ! echo "$line" | grep -qE '^(tls|tcp|quic)://[^[:space:]]+:[0-9]+$'; then
+        if ! echo "$line" | grep -qE '(^#.*$)|(^(tls|tcp|quic)://[^[:space:]]+:[0-9]+$)'; then
             [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Skipping invalid peer URI format: $line" >&2
             continue
         fi

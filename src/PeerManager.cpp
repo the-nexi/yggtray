@@ -390,7 +390,30 @@ void formatPeer(QTextStream& stream, const PeerData& peer) {
  * @param peers A list of peers to write.
  */
 void writePeers(QTextStream& stream, const QList<PeerData>& peers) {
-    for (const auto& peer : peers) {
+    QList<PeerData> privatePeers;
+    QList<PeerData> publicPeers;
+    privatePeers.reserve(peers.size());
+    std::copy_if(peers.begin(),
+                 peers.end(),
+                 std::back_inserter(privatePeers),
+                 [](const PeerData& p) {
+                     return p.isPrivate;
+                 });
+    publicPeers.reserve(peers.size());
+    std::copy_if(peers.begin(),
+                 peers.end(),
+                 std::back_inserter(publicPeers),
+                 [](const PeerData& p) {
+                     return (! p.isPrivate);
+                 });
+    if (! privatePeers.isEmpty()) {
+        stream << "# Private peers:\n";
+        for (const auto& peer : privatePeers) {
+            formatPeer(stream, peer);
+        }
+    }
+    stream << "# Public peers:\n";
+    for (const auto& peer : publicPeers) {
         formatPeer(stream, peer);
     }
 }
