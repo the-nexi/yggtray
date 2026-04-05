@@ -1,12 +1,14 @@
 #include <check.h>
+#include <QtCore/QCoreApplication>
 #include <stdio.h>
 
 // Forward declarations from other test files
 extern Suite* servicemanager_suite(void);
 extern Suite* peermanager_suite(void);
 
-int main(void)
+int main(int argc, char* argv[])
 {
+    QCoreApplication app(argc, argv);
     int number_failed = 0;
     SRunner* sr = srunner_create(servicemanager_suite());
     srunner_add_suite(sr, peermanager_suite());

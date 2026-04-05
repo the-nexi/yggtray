@@ -1,6 +1,9 @@
 #include <check.h>
+#include <memory>
 #include <QtCore/QString>
 #include <QtCore/QList>
+#include <QtCore/QSettings>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QtTest>
@@ -51,11 +54,22 @@ START_TEST(test_writePeers) {
     tmpFile.seek(0);
     QString fileContent = QString::fromUtf8(tmpFile.readAll());
     QString expectedResult =
+        "# Public peers:\n"
         "tls://example.com:1000\n"
         "tls://example.com:1001\n";
     ck_assert_str_eq(fileContent.toUtf8().constData(),
                      expectedResult.toUtf8().constData());
 }
+
+START_TEST(test_isPeerUriValid_basic) {
+    ck_assert(isPeerUriValid("tls://example.com:1000"));
+    ck_assert(isPeerUriValid("tcp://192.168.1.1:1234"));
+    ck_assert(isPeerUriValid("quic://[2001:db8::1]:1234"));
+    ck_assert(!isPeerUriValid("tls://example.com"));
+    ck_assert(!isPeerUriValid("tcp://example.com"));
+    ck_assert(!isPeerUriValid(""));
+}
+END_TEST
 
 // Test getHostname logic
 START_TEST(test_getHostname_basic)
@@ -173,6 +187,55 @@ START_TEST(test_peersDiscovered_signal)
     ck_assert_int_eq(peers.size(), 2);
     ck_assert(peers[0].host.contains("tls://[2001:db8::1]:1234"));
     ck_assert(peers[1].host.contains("tcp://192.168.1.1:1234"));
+
+    reply->deleteLater();
+}
+END_TEST
+
+START_TEST(test_peersDiscovered_filters_invalid_private_peers)
+{
+    printf("[PeerManager] test_peersDiscovered_filters_invalid_private_peers: Testing invalid private peers are ignored...\n");
+    QTemporaryDir tempDir;
+    ck_assert(tempDir.isValid());
+    auto settings = std::make_shared<QSettings>(
+        tempDir.filePath("yggtray.ini"),
+        QSettings::IniFormat
+    );
+    settings->setValue(
+        "peer_discovery/private_peers",
+        "tls://example.com,tcp://example.com,quic://spain.magicum.net:36900"
+    );
+    settings->sync();
+
+    PeerManager mgr(settings, false, nullptr);
+
+    QByteArray html =
+        "<html><body>"
+        "<td>tls://public.example:1234</td>"
+        "</body></html>";
+    DummyReply* reply = new DummyReply(html);
+
+    QSignalSpy spy(&mgr, SIGNAL(peersDiscovered(QList<PeerData>)));
+
+    QMetaObject::invokeMethod(
+        &mgr,
+        "handleNetworkResponse",
+        Qt::DirectConnection,
+        Q_ARG(QNetworkReply*, reply)
+    );
+
+    ck_assert_int_eq(spy.count(), 1);
+
+    QList<QVariant> args = spy.takeFirst();
+    QList<PeerData> peers =
+        qvariant_cast<QList<PeerData>>(args.at(0));
+    ck_assert_int_eq(peers.size(), 2);
+    ck_assert(peers[0].isPrivate);
+    ck_assert_str_eq(peers[0].host.toUtf8().constData(),
+                     "quic://spain.magicum.net:36900");
+    ck_assert(!peers[1].isPrivate);
+    ck_assert_str_eq(peers[1].host.toUtf8().constData(),
+                     "tls://public.example:1234");
 
     reply->deleteLater();
 }
@@ -306,9 +369,11 @@ Suite* peermanager_suite(void)
 
     tcase_add_test(tc, test_formatPeer);
     tcase_add_test(tc, test_writePeers);
+    tcase_add_test(tc, test_isPeerUriValid_basic);
     tcase_add_test(tc, test_getHostname_basic);
     tcase_add_test(tc, test_exportPeersToCsv_basic);
     tcase_add_test(tc, test_peersDiscovered_signal);
+    tcase_add_test(tc, test_peersDiscovered_filters_invalid_private_peers);
     tcase_add_test(tc, test_error_signal_network_failure);
     tcase_add_test(tc, test_cancelTests_cancels_all);
     tcase_add_test(tc, test_peersDiscovered_empty_list);
