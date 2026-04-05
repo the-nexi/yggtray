@@ -294,6 +294,10 @@ Please complete the installation in the terminal window and then click OK to con
       <translation>Настройка приватных пиров</translation>
     </message>
     <message>
+      <source>Write private peers below, one peer per line:</source>
+      <translation>Впишите приватные пиры сюда, по одному на строку:</translation>
+    </message>
+    <message>
       <source>Configure Proxy</source>
       <translation>Настроить прокси</translation>
     </message>

@@ -540,6 +540,9 @@ void PeerDiscoveryDialog::onPrivatePeersClicked() {
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
 
     QPlainTextEdit *textArea = new QPlainTextEdit(&dlg);
+    QLabel* label = new QLabel(
+        tr("Write private peers below, one peer per line:"));
+    layout->addWidget(label);
     layout->addWidget(textArea);
 
     QDialogButtonBox* buttons
