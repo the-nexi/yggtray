@@ -47,7 +47,6 @@ void PeerTestRunnable::run() {
         qDebug() << "[PeerTestRunnable::run] Skipping test for:"
                  << peerData.host
                  << "(cancelled before start)";
-        emit peerTested(peerData);
         return;
     }
 
@@ -89,7 +88,6 @@ void PeerTestRunnable::run() {
                     pingProcess.waitForFinished(100);
                 }
             }
-            emit peerTested(peerData);
             return;
         }
 
@@ -118,7 +116,6 @@ void PeerTestRunnable::run() {
         qDebug() << "[PeerTestRunnable::run]"
                  << "Test cancelled after ping completion for:"
                  << peerData.host;
-        emit peerTested(peerData);
         return;
     }
 
