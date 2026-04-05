@@ -568,10 +568,29 @@ void PeerDiscoveryDialog::onPrivatePeersClicked() {
 
     if (dlg.exec() == QDialog::Accepted) {
         QString content = textArea->toPlainText();
-        QStringList lines = content.split("\n");
-        QString s = lines.join(",");
+        QStringList peers;
+        for (const auto& line : content.split("\n")) {
+            QString peerUri = line.trimmed();
+            if (peerUri.isEmpty()) {
+                continue;
+            }
+            if (!isPeerUriValid(peerUri)) {
+                qDebug() << "[PeerDiscoveryDialog::onPrivatePeersClicked]"
+                         << "Skipping invalid private peer:"
+                         << peerUri;
+                continue;
+            }
+            peers.append(peerUri);
+        }
+        QString s = peers.join(",");
         settings->setValue("peer_discovery/private_peers",
                            s);
+        settings->sync();
+
+        if (isTesting) {
+            stopTesting();
+        }
+        onRefreshClicked();
     }
 }
 
