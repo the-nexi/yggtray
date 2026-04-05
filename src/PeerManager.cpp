@@ -408,6 +408,17 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     QList<PeerData> sortedPeers = selectedPeers;
     std::sort(sortedPeers.begin(), sortedPeers.end(),
         [](const PeerData& a, const PeerData& b) {
+            if (a.isPrivate) {
+                if (b.isPrivate) {
+                    if (a.isValid && b.isValid) {
+                        return a.latency < b.latency;
+                    }
+                    return a.isValid > b.isValid;
+                }
+                return true;
+            } else if (b.isPrivate) {
+                return false;
+            }
             if (a.isValid && b.isValid) {
                 return a.latency < b.latency;
             }
@@ -419,9 +430,16 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
     std::copy_if(sortedPeers.begin(),
                  sortedPeers.end(),
                  std::back_inserter(validPeers),
-                 [](const PeerData& p) { return p.isValid; });
+                 [](const PeerData& p) {
+                     return p.isPrivate || p.isValid;
+                 });
     qDebug() << "[PeerManager::updateConfig] Valid peers in selection:"
              << validPeers.size();
+    for (const auto& peer : validPeers) {
+        qDebug() << "[PeerManager::updateConfig]"
+                 << "Using peer:"
+                 << peer.host;
+    }
 
     // Extract update script to /tmp
     if (!extractResource(":/scripts/update-peers.sh", SCRIPT_PATH)) {
