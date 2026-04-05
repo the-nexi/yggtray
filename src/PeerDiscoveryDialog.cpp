@@ -546,7 +546,7 @@ void PeerDiscoveryDialog::onPrivatePeersClicked() {
     layout->addWidget(textArea);
 
     QDialogButtonBox* buttons
-        = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+        = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                &dlg);
     layout->addWidget(buttons);
 
