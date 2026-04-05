@@ -408,6 +408,8 @@ void PeerDiscoveryDialog::onApplyClicked() {
     for (const auto& peer : peerList) {
         qDebug() << "Peer in list:"
                  << peer.host
+                 << "isPrivate:"
+                 << peer.isPrivate
                  << "isValid:"
                  << peer.isValid
                  << "latency:"
@@ -434,6 +436,7 @@ void PeerDiscoveryDialog::onApplyClicked() {
         selectedPeers = peerList;
         for (const auto& peer : selectedPeers) {
             qDebug() << "Using peer:" << peer.host
+                     << "isPrivate:" << peer.isPrivate
                      << "isValid:" << peer.isValid
                      << "latency:" << peer.latency;
         }

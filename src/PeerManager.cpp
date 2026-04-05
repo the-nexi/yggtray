@@ -566,6 +566,7 @@ void PeerManager::handleNetworkResponse(QNetworkReply* reply) {
     for (auto& p : privatePeers.split(",")) {
         PeerData peer;
         peer.host = p;
+        peer.isPrivate = true;
         privatePeersList.append(peer);
     }
     if (reply->error() == QNetworkReply::NoError) {

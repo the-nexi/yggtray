@@ -23,6 +23,11 @@ struct PeerData {
     int latency = -1;      // in milliseconds
     bool isValid = false;
 
+    /**
+     * @brief Whether the peer is private (that is, added by the user) or not.
+     */
+    bool isPrivate = false;
+
     // Define equality operator based on host
     bool operator==(const PeerData& other) const {
         return host == other.host;
