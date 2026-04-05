@@ -50,6 +50,7 @@ trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
     echo "  Peers: ["
     # Process each line, trim whitespace, ensure proper format
     COUNT=0
+    VALID_PEERS=0
     MAX_PEERS=15  # Limit to 15 peers as mentioned in the comments
 
     while IFS= read -r line || [ -n "$line" ]; do
@@ -62,13 +63,20 @@ trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
         # Skip if empty after trimming
         [ -z "$line" ] && continue
 
-        # Enforce proper URI format - must be tls://, tcp:// or quic:// followed by host and port
-        if ! echo "$line" | grep -qE '(^#.*$)|(^(tls|tcp|quic)://[^[:space:]]+:[0-9]+$)'; then
+        # Preserve section comments without counting them as peers.
+        if echo "$line" | grep -qE '^#.*$'; then
+            echo "    $line"
+            continue
+        fi
+
+        # Enforce proper URI format - must be tls://, tcp:// or quic:// followed by host and port.
+        if ! echo "$line" | grep -qE '^(tls|tcp|quic)://(\[[A-Fa-f0-9:.]+\]|[A-Za-z0-9.-]+):[0-9]+$'; then
             [ "$VERBOSE_MODE" = "1" ] && echo "Debug: Skipping invalid peer URI format: $line" >&2
             continue
         fi
 
-        # Count the peers we're adding (up to MAX_PEERS)
+        # Count the peers we're adding (up to MAX_PEERS).
+        VALID_PEERS=$((VALID_PEERS + 1))
         COUNT=$((COUNT + 1))
         if [ "$COUNT" -le "$MAX_PEERS" ]; then
             echo "    $line"
@@ -81,8 +89,8 @@ trap 'rm -f "$TEMP_FILE" "$TEMP_FILE.peers"' EXIT
     echo "  ]"
 } > "$TEMP_FILE.peers"
 
-# Check if the file has any peers
-if ! grep -q '[^[:space:]]' "$TEMP_FILE.peers"; then
+# Check if the file has any peers.
+if [ "${VALID_PEERS:-0}" -eq 0 ]; then
     echo "Error: No valid peers found in input file" >&2
     exit 1
 fi
