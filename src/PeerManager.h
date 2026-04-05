@@ -221,6 +221,7 @@ private:
 
 // Auxiliary procedures.
 
+bool isPeerUriValid(const QString& peerUri);
 void formatPeer(QTextStream& stream, const PeerData& peer);
 void writePeers(QTextStream& stream, const QList<PeerData>& peers);
 

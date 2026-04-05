@@ -20,6 +20,13 @@
 static const QString SCRIPT_PATH = "/tmp/yggtray-update-peers.sh";
 static const QString POLICY_PATH = "/tmp/org.yggtray.updatepeers.policy";
 
+bool isPeerUriValid(const QString& peerUri) {
+    static const QRegularExpression re(
+        "^(?:tls|tcp|quic)://(?:\\[[A-Fa-f0-9:.]+\\]|[A-Za-z0-9.-]+):\\d+$"
+    );
+    return re.match(peerUri.trimmed()).hasMatch();
+}
+
 /**
  * @brief Constructor for PeerTestRunnable
  * @param peer The peer data to test.
@@ -454,7 +461,8 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
                  sortedPeers.end(),
                  std::back_inserter(validPeers),
                  [](const PeerData& p) {
-                     return p.isPrivate || p.isValid;
+                     return isPeerUriValid(p.host)
+                         && (p.isPrivate || p.isValid);
                  });
     qDebug() << "[PeerManager::updateConfig] Valid peers in selection:"
              << validPeers.size();
@@ -503,13 +511,20 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
         // If no valid peers, use all peers as a fallback
         qDebug() << "[PeerManager::updateConfig]"
                  << "Warning: No valid peers found, using all peers as fallback";
-        stream.seek(0); // Reset the stream position
+        QList<PeerData> fallbackPeers;
+        fallbackPeers.reserve(sortedPeers.size());
+        std::copy_if(sortedPeers.begin(),
+                     sortedPeers.end(),
+                     std::back_inserter(fallbackPeers),
+                     [](const PeerData& p) {
+                         return isPeerUriValid(p.host);
+                     });
 
-        // Use all peers instead, sorted by latency if available
-        writePeers(stream, sortedPeers);
+        // Use URI-valid peers instead, sorted by latency if available.
+        writePeers(stream, fallbackPeers);
 
         qDebug() << "[PeerManager::updateConfig] Writing"
-                 << sortedPeers.count()
+                 << fallbackPeers.count()
                  << "peers to config (up to" << MAX_PEERS << "will be used)";
     }
 
@@ -599,14 +614,27 @@ bool PeerManager::updateConfig(const QList<PeerData>& selectedPeers) {
  */
 void PeerManager::handleNetworkResponse(QNetworkReply* reply) {
     QList<PeerData> privatePeersList;
-    QString privatePeers
-        = settings->value("peer_discovery/private_peers", "").toString();
+    QString privatePeers;
+    if (settings) {
+        privatePeers
+            = settings->value("peer_discovery/private_peers", "").toString();
+    }
     qDebug() << "[PeerManager::handleNetworkResponse]"
              << "Private peers: "
              << privatePeers;
-    for (auto& p : privatePeers.split(",")) {
+    for (const auto& p : privatePeers.split(",")) {
+        QString peerUri = p.trimmed();
+        if (peerUri.isEmpty()) {
+            continue;
+        }
+        if (!isPeerUriValid(peerUri)) {
+            qDebug() << "[PeerManager::handleNetworkResponse]"
+                     << "Skipping invalid private peer:"
+                     << peerUri;
+            continue;
+        }
         PeerData peer;
-        peer.host = p;
+        peer.host = peerUri;
         peer.isPrivate = true;
         privatePeersList.append(peer);
     }
