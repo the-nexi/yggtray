@@ -362,15 +362,15 @@ bool SetupWizard::ensurePackageInstalled(const DistroInfo &info) {
 
     if (choice == QObject::tr("Install")) {
         // Use x-terminal-emulator on Debian/Ubuntu, or fallback to xterm
-        QProcess termDetectProcess;
+        bool isTerminalDetected;
         QString terminalCmd;
 
         // Try to detect the default terminal emulator for this system
         if (info.packageManager == "apt-get") {
             // Debian/Ubuntu specific - check if x-terminal-emulator exists
-            termDetectProcess.start("which", QStringList() << "x-terminal-emulator");
-            termDetectProcess.waitForFinished();
-            if (termDetectProcess.exitCode() == 0) {
+            isTerminalDetected
+                = System::which(QStringList() << "x-terminal-emulator");
+            if (isTerminalDetected) {
                 terminalCmd = "x-terminal-emulator -e";
             }
         }
@@ -385,9 +385,8 @@ bool SetupWizard::ensurePackageInstalled(const DistroInfo &info) {
                 "xterm"
             };
             for (const auto& term : terminals) {
-                termDetectProcess.start("which", QStringList() << term);
-                termDetectProcess.waitForFinished();
-                if (termDetectProcess.exitCode() == 0) {
+                isTerminalDetected = System::which(QStringList() << term);
+                if (isTerminalDetected) {
                     if (term == "gnome-terminal") {
                         terminalCmd = QString("%1 -- ").arg(term);
                     } else if (term == "konsole") {
@@ -492,12 +491,10 @@ bool SetupWizard::ensureNetfilterPersistent() {
 
             if (choice == QObject::tr("Install")) {
                 // Detect terminal similar to ensurePackageInstalled
-                QProcess termDetectProcess;
                 QString terminalCmd;
-
-                termDetectProcess.start("which", QStringList() << "x-terminal-emulator");
-                termDetectProcess.waitForFinished();
-                if (termDetectProcess.exitCode() == 0) {
+                bool isTerminalDetected
+                    = System::which(QStringList() << "x-terminal-emulator");
+                if (isTerminalDetected) {
                     terminalCmd = "x-terminal-emulator -e";
                 } else {
                     QStringList terminals = {
@@ -508,9 +505,9 @@ bool SetupWizard::ensureNetfilterPersistent() {
                         "xterm"
                     };
                     for (const auto& term : terminals) {
-                        termDetectProcess.start("which", QStringList() << term);
-                        termDetectProcess.waitForFinished();
-                        if (termDetectProcess.exitCode() == 0) {
+                        isTerminalDetected
+                            = System::which(QStringList() << term);
+                        if (isTerminalDetected) {
                             if (term == "gnome-terminal") {
                                 terminalCmd = QString("%1 -- ").arg(term);
                             } else {

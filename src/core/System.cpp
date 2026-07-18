@@ -130,3 +130,16 @@ bool System::mkdir(const QString& path) {
     }
     return true;
 }
+
+/**
+ * Run "which" command.
+ *
+ * @param args Command arguments.
+ * @return True when the command executed successfully, false otherwise.
+ */
+bool System::which(const QStringList& args) {
+    QProcess termDetectProcess;
+    termDetectProcess.start("which", args);
+    termDetectProcess.waitForFinished();
+    return (termDetectProcess.exitCode() == 0);
+}
