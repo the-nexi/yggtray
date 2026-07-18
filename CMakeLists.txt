@@ -52,7 +52,8 @@ set_source_files_properties("${RESOURCES_FILE}" PROPERTIES GENERATED TRUE)
 qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 
 # Add executable
-add_executable(yggtray 
+add_executable(yggtray
+    src/core/System.cpp
     src/tray.cpp 
     src/ServiceManager.cpp
     src/ProcessRunner.cpp

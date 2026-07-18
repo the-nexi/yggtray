@@ -10,6 +10,7 @@
 #include <QTextStream>
 #include <QTranslator>
 
+#include "core/System.h"
 #include "SetupWizard.h"
 
 /**
@@ -56,7 +57,7 @@ void SetupWizard::run(bool forceRun) {
     }
 
     // Perform the wizard actions
-    if (!isUserInGroup("yggdrasil")) {
+    if (! System::isUserInGroup("yggdrasil")) {
         QMessageBox::information(
             nullptr,
             QObject::tr("Group Membership"),
@@ -238,21 +239,9 @@ QString SetupWizard::promptAction(const QString &message,
     return ok ? choice : QString();
 }
 
-bool SetupWizard::isUserInGroup(const QString &groupName) {
-    QProcess process;
-    process.start("groups", QStringList{});
-    process.waitForFinished();
-    QString output = process.readAllStandardOutput().trimmed();
-    return output.split(" ").contains(groupName);
-}
-
 void SetupWizard::addUserToGroup(const QString &groupName) {
-    QProcess process;
-    QStringList arguments = {"usermod", "-a", "-G", groupName, qgetenv("USER")};
-    process.start("pkexec", arguments); // GUI password prompt
-    process.waitForFinished();
-
-    if (process.exitCode() == 0) {
+    bool result = System::addUserToGroup(groupName);
+    if (result == true) {
         QMessageBox::information(
             nullptr,
             QObject::tr("Group Addition"),
@@ -273,65 +262,8 @@ void SetupWizard::addUserToGroup(const QString &groupName) {
     }
 }
 
-QString SetupWizard::detectDistribution() {
-    // Try os-release first (most modern distros)
-    QFile osRelease("/etc/os-release");
-    if (osRelease.open(QFile::ReadOnly | QFile::Text)) {
-        QString content = osRelease.readAll();
-        osRelease.close();
-
-        // Check for common distro identifiers
-        if (content.contains("ID=arch")
-            || content.contains("ID=endeavouros")
-            || content.contains("ID=manjaro"))
-            return "arch";
-        if (content.contains("ID=ubuntu")
-            || content.contains("ID=debian")
-            || content.contains("ID=linuxmint"))
-            return "debian";
-        if (content.contains("ID=fedora"))
-            return "fedora";
-        if (content.contains("ID=opensuse"))
-            return "suse";
-    }
-
-    // Fallback to command tools
-    QProcess process;
-    QStringList args;
-
-    args.clear();
-    args << "-v" << "pacman";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0)
-        return "arch";
-
-    args.clear();
-    args << "-v" << "apt-get";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0)
-        return "debian";
-
-    args.clear();
-    args << "-v" << "dnf";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0)
-        return "fedora";
-
-    args.clear();
-    args << "-v" << "zypper";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0)
-        return "suse";
-
-    return "unknown";
-}
-
 SetupWizard::DistroInfo SetupWizard::getDistroInfo() {
-    QString distro = detectDistribution();
+    QString distro = System::detectDistribution();
     SetupWizard::DistroInfo info;
 
     // Distribution-specific configuration
@@ -528,7 +460,7 @@ bool SetupWizard::ensurePackageInstalled(const DistroInfo &info) {
 }
 
 bool SetupWizard::ensureNetfilterPersistent() {
-    QString distro = detectDistribution();
+    QString distro = System::detectDistribution();
 
     // Only needed for Debian-based distributions
     if (distro == "debian") {
@@ -632,13 +564,8 @@ bool SetupWizard::ensureNetfilterPersistent() {
 void SetupWizard::configureIptables() {
     DistroInfo distroInfo = getDistroInfo();
 
-    // Create directory if it doesn't exist
-    QDir dir = QFileInfo(distroInfo.rulesPath).dir();
-    if (!dir.exists()) {
-        QProcess process;
-        process.start("pkexec", {"mkdir", "-p", dir.path()});
-        process.waitForFinished();
-    }
+    // TODO: Handle the return value.
+    System::mkdir(distroInfo.rulesPath);
 
     // For Debian-based systems, specifically check for netfilter-persistent
     if ((distroInfo.serviceName == "netfilter-persistent")

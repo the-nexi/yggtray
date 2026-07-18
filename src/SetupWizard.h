@@ -88,23 +88,10 @@ private:
     QString promptAction(const QString &message, const QStringList &options);
 
     /**
-     * @brief Checks if the current user is in a specific group.
-     * @param groupName The name of the group to check.
-     * @return True if the user is in the group, false otherwise.
-     */
-    bool isUserInGroup(const QString &groupName);
-
-    /**
      * @brief Adds the current user to a specified group.
      * @param groupName The name of the group to add the user to.
      */
     void addUserToGroup(const QString &groupName);
-
-    /**
-     * @brief Detects the Linux distribution currently running
-     * @return The detected distribution ID string
-     */
-    QString detectDistribution();
 
     /**
      * @brief Gets information about ip6tables for the current distribution
