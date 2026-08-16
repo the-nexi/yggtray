@@ -13,6 +13,7 @@
 #include <QString>
 #include <QStringList>
 
+#include "ProcessRunner.h"
 #include "System.h"
 
 /**
@@ -23,10 +24,9 @@
  * otherwise.
  */
 bool System::isUserInGroup(const QString &groupName) {
-    QProcess process;
-    process.start("groups", QStringList{});
-    process.waitForFinished();
-    QString output = process.readAllStandardOutput().trimmed();
+    ProcessRunner process;
+    QString output, errorOutput;
+    process.run("groups", QStringList{}, output, errorOutput);
     return output.split(" ").contains(groupName);
 }
 
@@ -38,13 +38,14 @@ bool System::isUserInGroup(const QString &groupName) {
  * false otherwise.
  */
 bool System::addUserToGroup(const QString &groupName) {
-    QProcess process;
+    ProcessRunner process;
+    QString output, errorOutput;
     QStringList arguments = {
         "usermod", "-a", "-G", groupName, qgetenv("USER")
     };
-    process.start("pkexec", arguments); // GUI password prompt
-    process.waitForFinished();
-    return process.exitCode() == 0;
+    // GUI password prompt
+    int rc = process.run("pkexec", arguments, output, errorOutput);
+    return (rc == 0);
 }
 
 /**
@@ -76,38 +77,36 @@ QString System::detectDistribution() {
     }
 
     // Fallback to command tools
-    QProcess process;
+    ProcessRunner process;
+    QString output, errorOutput;
+    int rc;
     QStringList args;
 
     args.clear();
     args << "-v" << "pacman";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0) {
+    rc = process.run("command", args, output, errorOutput);
+    if (rc == 0) {
         return "arch";
     }
 
     args.clear();
     args << "-v" << "apt-get";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0) {
+    process.run("command", args, output, errorOutput);
+    if (rc == 0) {
         return "debian";
     }
 
     args.clear();
     args << "-v" << "dnf";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0) {
+    process.run("command", args, output, errorOutput);
+    if (rc == 0) {
         return "fedora";
     }
 
     args.clear();
     args << "-v" << "zypper";
-    process.start("command", args);
-    process.waitForFinished();
-    if (process.exitCode() == 0) {
+    process.run("command", args, output, errorOutput);
+    if (rc == 0) {
         return "suse";
     }
 
@@ -123,10 +122,11 @@ QString System::detectDistribution() {
 bool System::mkdir(const QString& path) {
     QDir dir = QFileInfo(path).dir();
     if (!dir.exists()) {
-        QProcess process;
-        process.start("pkexec", {"mkdir", "-p", dir.path()});
-        process.waitForFinished();
-        return (process.exitCode() == 0);
+        ProcessRunner process;
+        QString output, errorOutput;
+        int rc = process.run("pkexec", {"mkdir", "-p", dir.path()},
+                             output, errorOutput);
+        return (rc == 0);
     }
     return true;
 }
@@ -138,8 +138,8 @@ bool System::mkdir(const QString& path) {
  * @return True when the command executed successfully, false otherwise.
  */
 bool System::which(const QStringList& args) {
-    QProcess termDetectProcess;
-    termDetectProcess.start("which", args);
-    termDetectProcess.waitForFinished();
-    return (termDetectProcess.exitCode() == 0);
+    ProcessRunner process;
+    QString output, errorOutput;
+    int rc = process.run("which", args, output, errorOutput);
+    return (rc == 0);
 }
