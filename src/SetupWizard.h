@@ -23,7 +23,7 @@
 #include <QTextStream>
 #include <QTranslator>
 
-#include "ProcessRunner.h"
+#include "core/ProcessRunner.h"
 #include "ServiceManager.h"
 
 /**

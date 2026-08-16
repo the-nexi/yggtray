@@ -10,7 +10,7 @@
 
 #include <QString>
 
-#include "IProcessRunner.h"
+#include "core/IProcessRunner.h"
 
 /**
  * @class ServiceManager

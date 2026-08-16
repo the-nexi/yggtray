@@ -6,7 +6,7 @@
 #ifndef MOCKPROCESSRUNNER_H
 #define MOCKPROCESSRUNNER_H
 
-#include "IProcessRunner.h"
+#include "core/IProcessRunner.h"
 #include <QString>
 #include <QStringList>
 #include <map>

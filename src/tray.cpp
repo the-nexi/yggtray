@@ -25,7 +25,7 @@
 #include <iostream>
 
 #include "PeerDiscoveryDialog.h"
-#include "ProcessRunner.h"
+#include "core/ProcessRunner.h"
 #include "ServiceManager.h"
 #include "SetupWizard.h"
 #include "SocketManager.h"

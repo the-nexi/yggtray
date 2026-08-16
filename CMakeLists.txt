@@ -53,10 +53,10 @@ qt5_add_resources(RESOURCES "${CMAKE_BINARY_DIR}/${RESOURCES_FILE}")
 
 # Add executable
 add_executable(yggtray
+    src/core/ProcessRunner.cpp
     src/core/System.cpp
     src/tray.cpp 
     src/ServiceManager.cpp
-    src/ProcessRunner.cpp
     src/SocketManager.cpp
     src/PeerManager.cpp
     src/PeerDiscoveryDialog.cpp
@@ -163,8 +163,8 @@ set(UNIT_TEST_SOURCES
 )
 add_executable(unit_tests
     ${UNIT_TEST_SOURCES}
+    src/core/ProcessRunner.cpp
     src/ServiceManager.cpp
-    src/ProcessRunner.cpp
     src/PeerManager.cpp
 )
 target_include_directories(unit_tests PRIVATE ${Qt5Core_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
