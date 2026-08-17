@@ -91,21 +91,21 @@ QString System::detectDistribution() {
 
     args.clear();
     args << "-v" << "apt-get";
-    process.run("command", args, output, errorOutput);
+    rc = process.run("command", args, output, errorOutput);
     if (rc == 0) {
         return "debian";
     }
 
     args.clear();
     args << "-v" << "dnf";
-    process.run("command", args, output, errorOutput);
+    rc = process.run("command", args, output, errorOutput);
     if (rc == 0) {
         return "fedora";
     }
 
     args.clear();
     args << "-v" << "zypper";
-    process.run("command", args, output, errorOutput);
+    rc = process.run("command", args, output, errorOutput);
     if (rc == 0) {
         return "suse";
     }
